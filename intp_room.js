@@ -316,6 +316,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     if (msg == "!전체초기화") {
       attendanceList = {};
+      attendanceStats = {};
       chatCount = {};
       fortuneList = {};
       quizWinners = {};
@@ -490,6 +491,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
         list += (i + 1) + "등: " + attendanceList[today][i].sender + medal + "\n";
       }
+      list += "랭킹에 계신 분들 모두 축하합니다!";
       replier.reply("📋 오늘의 출석 랭킹\n" + list);
     } else {
       replier.reply("오늘은 아직 아무도 출석하지 않았어요. 😢");
@@ -665,9 +667,9 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       "9. !운세 – 오늘의 운세 보기 🔮\n" +
       "10. !로또 – 랜덤 로또 번호 🎲\n" +
       "11. !퀴즈 – 랜덤으로 나오는 넌센스 퀴즈를 맞춰보세요!\n" +
-      "12. !퀴즈랭킹 – 정답을 맞힌 순 TOP 10 💯 (Beta)\n" +
+      "12. !퀴즈랭킹 – 정답을 맞힌 순 TOP 10 💯\n" +
       "문제 발생(무응답 등) 시 토리님에게 문의 부탁드립니다.\n" +
-      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 0.8.0)\n" +
+      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 0.8.1)\n" +
       "약관 및 자세한 내용은 \"!주의사항\" 커멘드를 입력해 확인해주세요.");
     return;
   }
