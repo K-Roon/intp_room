@@ -18,7 +18,7 @@ var quizList = [{
 }, {
   question: "화장실이 둥둥 떠있으면?",
   answer: ["공중화장실"],
-  hint: "ㄱㅈ화장실 이라고 하죠"
+  hint: "ㄱㅈ화장실 이라고 하죠."
 }, {
   question: "전화기가 둥둥 떠있으면?",
   answer: ["공중전화", "공중전화기"],
@@ -520,7 +520,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         var avg = stats.ranks.length ? (stats.ranks.reduce(function (a, b) { return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
         list += "- " + uname + ": " + stats.total + "일 출석 | 평균 등수 " + avg + "\n";
       }
-      list += "통계는 위와 같습니다. 출석 선물 이벤트 진행 시 위 표시된 통계를 따릅니다.";
+      list += "상위권에 계신 분들 모두 축하합니다!";
       replier.reply(list);
     }
     return;
