@@ -488,7 +488,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       var list = "";
       for (var i = 0; i < attendanceList[today].length; i++) {
         var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-        list += `${i + 1}등: ${attendanceList[today][i].sender}${medal}\n`;
+        list += (i + 1) + "등: " + attendanceList[today][i].sender + medal + "\n";
       }
       replier.reply("📋 오늘의 출석 랭킹\n" + list);
     } else {
@@ -496,6 +496,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
+
   // !출석통계 - 모든 멤버의 누적 및 평균 등수
   if (msg == "!출석통계") {
     var keys = Object.keys(attendanceStats);
