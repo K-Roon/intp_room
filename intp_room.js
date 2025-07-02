@@ -21,7 +21,7 @@ var quizList = [{
   hint: "ㄱㅈ화장실 이라고 하죠"
 }, {
   question: "전화기가 둥둥 떠있으면?",
-  answer: ["공중전화"],
+  answer: ["공중전화", "공중전화기"],
   hint: "이건 사회기반시설 중 하나로, 이용률이 적어도 철거하지 않습니다."
 }, {
   question: "카트에 만두가 있으면 뭘까?",
@@ -184,7 +184,7 @@ var quizList = [{
   answer: ["휴게소", "우편함"],
   hint: "일반적으로 고속도로에 있어요. 졸음쉼터 말고 다른 휴게시설이 있죠."
 }, {
-  question: "돈 대신 사과를 지불하면 뭘까? (힌트: 4글자)",
+  question: "돈 대신 사과를 지불하면 뭘까? (4글자)",
   answer: ["애플페이"],
   hint: "국제표준 비접촉결제인 EMV Contacless를 이용한, 가장 현대적인 Apple의 안전한 결제방식 입니다. (한국어로 입력하세요)"
 }, {
@@ -192,7 +192,7 @@ var quizList = [{
   answer: ["물건"],
   hint: "물총, 워터건 다 아닙니다. 물은 맞는데 총을 영어로 생각해보셔요."
 }, {
-  question: "세상에서 가장 쉬운 숫자는? (힌트: 정말로 쉬워요) (답 입력시 숫자만 입력)",
+  question: "세상에서 가장 쉬운 숫자는? (정말로 쉬워요) (답 입력시 숫자만 입력)",
   answer: ["190000"],
   hint: "아라비아숫자로 입력하세요."
 }, {
@@ -388,6 +388,30 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     return;
   }
   if (quizMode) {
+    // !힌트
+    if (msg == "!힌트") {
+      var currentQuiz = quizList.find(q => {
+        if (Array.isArray(q.answer)) {
+          return q.answer.includes(currentAnswer[0]);
+        } else {
+          return q.answer === currentAnswer;
+        }
+      });
+      if (currentQuiz && currentQuiz.hint) {
+        replier.reply("💡 힌트: " + currentQuiz.hint);
+      } else {
+        replier.reply("❌ 이 문제에는 힌트가 없습니다.");
+      }
+      return;
+    }
+    if (msg == "!종료") {
+      var answerText = Array.isArray(currentAnswer) ? currentAnswer[0] : currentAnswer;
+      replier.reply("🛑 퀴즈를 종료했습니다.\n정답은 '" + answerText + "' 였습니다.");
+      quizMode = false;
+      currentAnswer = "";
+      currentQuestion = "";
+      return;
+    }
     if (msg.startsWith("!정답 ")) {
       var guess = msg.substring(4).trim();
       var isCorrect = false;
@@ -414,25 +438,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       }
       return;
     }
-    // !힌트
-    if (msg == "!힌트" && quizMode && currentQuestion) {
-      var quiz = quizList.find(q => q.question === currentQuestion);
-      if (quiz && quiz.hint) {
-        replier.reply("💡 힌트: " + quiz.hint);
-      } else {
-        replier.reply("❌ 이 문제에는 힌트가 없습니다.");
-      }
-      return;
-    }
-    if (msg === "!종료") {
-      var answerText = Array.isArray(currentAnswer) ? currentAnswer[0] : currentAnswer;
-      replier.reply("🛑 퀴즈를 종료했습니다.\n정답은 '" + answerText + "' 였습니다.");
-      quizMode = false;
-      currentAnswer = "";
-      currentQuestion = "";
-      return;
-    }
-    if (msg.startsWith("!")) {
+    if (msg.startsWith("!") && msg != "!힌트") {
       replier.reply("⚠️ 퀴즈모드가 켜졌습니다.\n퀴즈모드 작동 중에는 명령어 사용이 어렵습니다.");
       return;
     }
@@ -440,14 +446,33 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   }
   if (msg == "!출석") {
     var name = getUnifiedSenderName(sender);
+
     if (!attendanceList[today])
       attendanceList[today] = [];
-    var already = attendanceList[today].some(e => getUnifiedSenderName(e.sender) === name);
+
+    var already = attendanceList[today].some(function (e) {
+      return getUnifiedSenderName(e.sender) === name;
+    });
+
     if (!already) {
       if (name != "권재현") {
-        attendanceList[today].push({ sender: sender, time: new Date() }); // 보여줄 닉네임은 원래대로
+        attendanceList[today].push({ sender: sender, time: new Date() });
+
+        // ✅ 출석 통계에 반영
+        var rank = attendanceList[today].length;
+        if (!attendanceStats[name]) {
+          attendanceStats[name] = {
+            total: 1,
+            ranks: [rank]
+          };
+        } else {
+          attendanceStats[name].total++;
+          attendanceStats[name].ranks.push(rank);
+        }
+
         saveData();
       }
+
       var rank = attendanceList[today].length;
       var medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "";
       replier.reply(sender + "님, " + rank + "등으로 출석 완료했어요! " + medal + " 🎉");
@@ -456,6 +481,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
+
   // !출석랭킹 - 오늘자 등수만 출력
   if (msg == "!출석랭킹") {
     if (attendanceList[today] && attendanceList[today].length > 0) {
@@ -478,21 +504,23 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     } else {
       var list = "📊 전체 출석 통계\n";
       keys.sort((a, b) => {
-        var t1 = attendanceStats[a]?.total || 0;
-        var t2 = attendanceStats[b]?.total || 0;
+        var t1 = (attendanceStats[a] && attendanceStats[a].total) || 0;
+        var t2 = (attendanceStats[b] && attendanceStats[b].total) || 0;
         if (t1 !== t2) return t2 - t1;
-        var r1 = attendanceStats[a]?.ranks || [];
-        var r2 = attendanceStats[b]?.ranks || [];
-        var avg1 = r1.length ? r1.reduce((x, y) => x + y) / r1.length : Infinity;
-        var avg2 = r2.length ? r2.reduce((x, y) => x + y) / r2.length : Infinity;
+
+        var r1 = (attendanceStats[a] && attendanceStats[a].ranks) || [];
+        var r2 = (attendanceStats[b] && attendanceStats[b].ranks) || [];
+        var avg1 = r1.length ? r1.reduce(function (x, y) { return x + y; }) / r1.length : Infinity;
+        var avg2 = r2.length ? r2.reduce(function (x, y) { return x + y; }) / r2.length : Infinity;
         return avg1 - avg2;
       });
       for (var i = 0; i < keys.length; i++) {
         var uname = keys[i];
         var stats = attendanceStats[uname];
-        var avg = stats.ranks.length ? (stats.ranks.reduce((a, b) => a + b) / stats.ranks.length).toFixed(2) : "N/A";
-        list += `- ${uname}: ${stats.total}일 출석, 평균 등수 ${avg}\n`;
+        var avg = stats.ranks.length ? (stats.ranks.reduce(function (a, b) { return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
+        list += "- " + uname + ": " + stats.total + "일 출석 | 평균 등수 " + avg + "\n";
       }
+      list += "통계는 위와 같습니다. 출석 선물 이벤트 진행 시 위 표시된 통계를 따릅니다.";
       replier.reply(list);
     }
     return;
@@ -638,7 +666,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       "11. !퀴즈 – 랜덤으로 나오는 넌센스 퀴즈를 맞춰보세요!\n" +
       "12. !퀴즈랭킹 – 정답을 맞힌 순 TOP 10 💯 (Beta)\n" +
       "문제 발생(무응답 등) 시 토리님에게 문의 부탁드립니다.\n" +
-      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 0.7.3)\n" +
+      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 0.8.0)\n" +
       "약관 및 자세한 내용은 \"!주의사항\" 커멘드를 입력해 확인해주세요.");
     return;
   }
