@@ -1,5 +1,6 @@
 var CHAT_FILE = "chatCountList.txt";
 var ATTENDANCE_FILE = "attendance_list.txt";
+var ATTENDANCE_STAT_FILE = "attendance_stats.txt";
 var DATE_FILE = "last_date.txt";
 var FORTUNE_FILE = "fortuneList.txt";
 var QUIZ_FILE = "quizWinners.txt";
@@ -13,196 +14,197 @@ var fortunes = ["✨ 오늘은 평소와는 다른 길로 걸어보세요. 익�
 var quizList = [{
   question: "세상에서 가장 억울한 도형은?",
   answer: ["원통"],
-  hint: ""
+  hint: "가장 억울할 때 'ㅇㅌ'하다 라고 하지요."
 }, {
   question: "화장실이 둥둥 떠있으면?",
   answer: ["공중화장실"],
-  hint: ""
+  hint: "ㄱㅈ화장실 이라고 하죠"
 }, {
   question: "전화기가 둥둥 떠있으면?",
   answer: ["공중전화"],
-  hint: ""
+  hint: "이건 사회기반시설 중 하나로, 이용률이 적어도 철거하지 않습니다."
 }, {
   question: "카트에 만두가 있으면 뭘까?",
   answer: ["카트만두"],
-  hint: ""
+  hint: "네팔의 수도입니다."
 }, {
   question: "소가 번개에 맞아 죽으면 뭘까? (5음절)",
   answer: ["우사인볼트"],
-  hint: ""
+  hint: "운동선수 이름입니다."
 }, {
   question: "'비가 1시간 동안 내린다'를 다른말로 뭐라고 할까? (붙여서 쓸 것)",
   answer: ["추적60분"],
-  hint: ""
+  hint: "방송 프로그램 이름입니다."
 }, {
   question: "어부들이 싫어하는 가수는?",
   answer: ["배철수"],
-  hint: ""
+  hint: "유명 가수 이름입니다. MBC FM4U 에서 DJ도 하고 있습니다."
 }, {
   question: "제상에서 제일 예쁜 풀은?",
   answer: ["뷰티풀"],
-  hint: ""
+  hint: "남자들이 이걸로 드립치죠. 얼굴에 풀 묻었다고."
 }, {
   question: "화상입고 하는 전화는?",
   answer: ["화상전화"],
-  hint: ""
+  hint: "얼굴을 보고 전화를 하는걸 이거라고 하죠."
 }, {
   question: "D가 20개씩 있으면 뭘까?",
   answer: ["스무디"],
-  hint: ""
+  hint: "디가 스무개 있으면 이거죠."
 }, {
   question: "소가 불에 타면?",
   answer: ["불소"],
-  hint: ""
+  hint: "치아에 이걸 코팅하면 충치를 예방할 수 있다고 알려져 있습니다."
 }, {
   question: "서울에서 가장 가난한 동은?",
   answer: ["일원동"],
-  hint: ""
+  hint: "실제 지명 이름입니다."
 }, {
   question: "(넌센스) 호주에서 쓰는 돈은?",
   answer: ["호주머니"],
-  hint: ""
+  hint: "호주달러는 아닙니다. 호주가 들어가는건 맞아요."
 }, {
   question: "싱가포르의 수도는?",
   answer: ["싱가포르"],
-  hint: ""
+  hint: "아... 이건 정말 쉬운데..."
 }, {
   question: "USA 다음은?",
   answer: ["USB"],
-  hint: ""
+  hint: "범용직렬버스라고 불리우는 것입니다. 컴퓨터에 쓰이는 사각형의 이것도, C타입이라고 부르는 것도 다 이 규격입니다."
 }, {
   question: "'성씨가 똑같다'를 3글자로 줄이면?",
   answer: ["성동일"],
-  hint: ""
+  hint: "유명인 이름입니다."
 }, {
   question: "'물속에 들어가 걷는다'를 4글자로 뭐라고 할까?",
   answer: ["입수보행"],
-  hint: ""
+  hint: "군대용어로, 양 손을 주머니에 넣고 보행하는 행위를 말합니다."
 }, {
   question: "바깥에서 탈모인게 들통나면? (4글자)",
   answer: ["실외탈모"],
-  hint: ""
+  hint: "군대용어로, 실외에서 모자를 쓰지 않고 돌아다니는 행위를 말합니다."
 }, {
   question: "혀가 거짓말할 때 쓰는 말은? (붙여서 쓸 것, 기호는 쓰지말것)",
   answer: ["전혀아닙니다"],
-  hint: ""
+  hint: "극구 부정할 때 쓰는 말이기도 합니다."
 }, {
   question: "화장실에서 막 나온 사람은? (4글자)",
-  answer: ["일본사람"],
-  hint: ""
+  answer: ["일본사람", "일본인"],
+  hint: "화장실에서 막 나왔다면, 볼 일을 본 사람이겠죠?"
 }, {
   question: "김소월이 수능을 볼 때 수리 '가'형을 보는 이유는? (붙여서 쓸 것, 김소월 시집 참고, 7글자)",
-  answer: ["나보기가역겨워"],
-  hint: ""
+  answer: ["나보기가역겨워", "나보기가역겨워서"],
+  hint: "김소월 시집을 참고해주세요."
 }, {
   question: "소가 구걸을 하면?",
   answer: ["우거지"],
-  hint: ""
+  hint: "이거 맛있는데... 국밥땡기네요..."
 }, {
   question: "슈퍼주니어 신동 옆에 있으면 뭐라고 할까? (3글자)",
   answer: ["신동엽"],
-  hint: ""
+  hint: "SNL에 자주 나오는 유명인 이름입니다."
 }, {
   question: "과자가 자기소개하면? (3글자)",
   answer: ["전과자"],
-  hint: ""
+  hint: "범죄를 저지른 이력이 있는 사람"
 }, {
   question: "소가 인스타를 하면?",
   answer: ["소셜네트워크"],
-  hint: ""
+  hint: "인스타그램, 페이스북, X 등을 포괄적으로 이르는 말입니다. 한국어로 작성해주세요. '소'로 시작합니다."
 }, {
   question: "'암소의 시대'를 4글자로 뭐라고 할까?",
   answer: ["소녀시대"],
   hint: ""
 }, {
   question: "소가 공포에 떨면?",
-  answer: ["소름"],
-  hint: ""
+  answer: ["소름", "소오름"],
+  hint: "진짜 __돋네요."
 }, {
   question: "'소가 외롭다'를 3글자로 뭐라고 할까?",
-  answer: ["소외감"],
+  answer: ["소외감", "소외"],
   hint: ""
 }, {
   question: "소가 아플땐 무슨 약을 먹을까? (3글자)",
   answer: ["소염제"],
-  hint: ""
+  hint: "진통OOO을 먹기도 하죠. 염증증상을 최소화 시켜주는 약을 이거라고 불러요."
 }, {
   question: "'교통사고'를 다른 말로 뭐라고 할까? (3글자)",
   answer: ["붕어빵"],
-  hint: ""
+  hint: "겨울하면 이거죠. 슈붕이던 팥붕이던 다 맛있습니다."
 }, {
   question: "차가 다니는 도로에 갑작스럽게 사람이 뛰어들면?",
   answer: ["카놀라유"],
-  hint: ""
+  hint: "Car가 놀라겠어유. 식용유 종류 중 하나여유."
 }, {
   question: "입모양이 S자인 사람을 뭐라고 할까? (영어 대문자, 3음절)",
   answer: ["EBS"],
-  hint: ""
+  hint: "한국교육방송공사의 영어 약어입니다."
 }, {
   question: "소가 시끄러우면? (2글자)",
   answer: ["소란"],
-  hint: ""
+  hint: "왜 이렇게 __이야!! 시끄러워 죽겠네!! (욕 아님)"
 }, {
   question: "달에서 쓰는 언어는?",
   answer: ["문어"],
-  hint: ""
+  hint: "달은 영어로 Moon, 그리고 한자로 語를 붙여보세요."
 }, {
   question: "소가 죽으면 다이소, 그러나 죽은 소가 많으면?",
   answer: ["산소부족"],
-  hint: ""
+  hint: "H2O 부족"
 }, {
   question: "양이 돈을 벌어서 내는 세금은 뭘까? (5글자)",
   answer: ["양도소득세"],
-  hint: ""
+  hint: "재화를 양도할 때 재화의 가치가 특정 금액을 초과할 경우 내는 세금을 말합니다."
 }, {
   question: "할아버지가 등산하면?",
   answer: ["산타할아버지"],
-  hint: ""
+  hint: "호호호"
 }, {
   question: "'할아버지! 산에서 불이나요!'를 6글자로 줄이면?",
   answer: ["산타할아버지"],
-  hint: ""
+  hint: "호호호"
 }, {
   question: "쟤는 포도다! 를 3글자로 줄이면?",
   answer: ["포도당"],
-  hint: ""
+  hint: "당 중의 하나로, 설탕 외 이 당을 바탕으로 달고나를 만들었다고도 합니다."
 }, {
   question: "햄버거의 색깔은?",
   answer: ["버건디"],
-  hint: ""
+  hint: "색깔 이름입니다."
 }, {
   question: "소가 그림을 그리면?",
   answer: ["피카소"],
-  hint: ""
+  hint: "소로 끝나는 유명 화가 이름입니다."
 }, {
   question: "'박나래가 오이를 씻는다' 를 6글자로 줄이면?",
   answer: ["오이씻구나래"],
-  hint: ""
+  hint: "메이드카페에서 외치는. 맛있어지는 주문은 '오이시쿠나래' 입니다. (오글오글)"
 }, {
   question: "소는 어디에서 쉴까?",
-  answer: ["휴게소"],
-  hint: ""
+  answer: ["휴게소", "우편함"],
+  hint: "일반적으로 고속도로에 있어요. 졸음쉼터 말고 다른 휴게시설이 있죠."
 }, {
   question: "돈 대신 사과를 지불하면 뭘까? (힌트: 4글자)",
   answer: ["애플페이"],
-  hint: ""
+  hint: "국제표준 비접촉결제인 EMV Contacless를 이용한, 가장 현대적인 Apple의 안전한 결제방식 입니다. (한국어로 입력하세요)"
 }, {
   question: "물이 총을 들고 있으면?",
   answer: ["물건"],
-  hint: ""
+  hint: "물총, 워터건 다 아닙니다. 물은 맞는데 총을 영어로 생각해보셔요."
 }, {
   question: "세상에서 가장 쉬운 숫자는? (힌트: 정말로 쉬워요) (답 입력시 숫자만 입력)",
   answer: ["190000"],
-  hint: ""
+  hint: "아라비아숫자로 입력하세요."
 }, {
   question: "로봇이 좋아하는 치킨 부위는?",
   answer: ["윙"],
-  hint: ""
+  hint: "로봇은 윙~ 치킨~ 하고 움직이죠."
 }];
 var quizCongrats = ["🎉 정답입니다! 대단해요, ", "👏 정확히 맞췄어요! 잘했어요, ", "🥳 똑똑하네요! 정답이에요, ", "💯 완벽한 정답입니다! 멋져요, ", "✨ 천재 아닌가요? 정답이에요, "];
 var helloEmojis = ["😊", "😄", "🙌", "👋", "✨", "😎", "🤗"];
 var shameEmojis = ["😒", "🙄", "😑", "🤦", "🤷", "👎", "🥱", "👀", "🫥", "🫠"];
 var attendanceList = {};
+var attendanceStats = {};
 var chatCount = {};
 var lastDate = "";
 var fortuneList = {};
@@ -215,6 +217,7 @@ var usedQuizzesToday = [];
 function loadData() {
   try {
     attendanceList = JSON.parse(DataBase.getDataBase(ATTENDANCE_FILE) || "{}");
+    attendanceStats = JSON.parse(DataBase.getDataBase(ATTENDANCE_STAT_FILE) || "{}");
     chatCount = JSON.parse(DataBase.getDataBase(CHAT_FILE) || "{}");
     fortuneList = JSON.parse(DataBase.getDataBase(FORTUNE_FILE) || "{}");
     quizWinners = JSON.parse(DataBase.getDataBase(QUIZ_FILE) || "{}");
@@ -230,6 +233,7 @@ function loadData() {
 function saveData() {
   try {
     DataBase.setDataBase(ATTENDANCE_FILE, JSON.stringify(attendanceList));
+    DataBase.setDataBase(ATTENDANCE_STAT_FILE, JSON.stringify(attendanceStats));
     DataBase.setDataBase(CHAT_FILE, JSON.stringify(chatCount));
     DataBase.setDataBase(FORTUNE_FILE, JSON.stringify(fortuneList));
     DataBase.setDataBase(QUIZ_FILE, JSON.stringify(quizWinners));
@@ -287,6 +291,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   if (sender == "권재현") {
     if (msg == "!출석초기화") {
       attendanceList = {};
+      attendanceStats = {};
       saveData();
       replier.reply("✅ 출석 데이터를 초기화했어요.");
       return;
@@ -409,6 +414,16 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       }
       return;
     }
+    // !힌트
+    if (msg == "!힌트" && quizMode && currentQuestion) {
+      var quiz = quizList.find(q => q.question === currentQuestion);
+      if (quiz && quiz.hint) {
+        replier.reply("💡 힌트: " + quiz.hint);
+      } else {
+        replier.reply("❌ 이 문제에는 힌트가 없습니다.");
+      }
+      return;
+    }
     if (msg === "!종료") {
       var answerText = Array.isArray(currentAnswer) ? currentAnswer[0] : currentAnswer;
       replier.reply("🛑 퀴즈를 종료했습니다.\n정답은 '" + answerText + "' 였습니다.");
@@ -441,47 +456,47 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
-// !출석랭킹 - 오늘자 등수만 출력
-if (msg == "!출석랭킹") {
-  if (attendanceList[today] && attendanceList[today].length > 0) {
-    var list = "";
-    for (var i = 0; i < attendanceList[today].length; i++) {
-      var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-      list += `${i + 1}등: ${attendanceList[today][i].sender}${medal}\n`;
+  // !출석랭킹 - 오늘자 등수만 출력
+  if (msg == "!출석랭킹") {
+    if (attendanceList[today] && attendanceList[today].length > 0) {
+      var list = "";
+      for (var i = 0; i < attendanceList[today].length; i++) {
+        var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
+        list += `${i + 1}등: ${attendanceList[today][i].sender}${medal}\n`;
+      }
+      replier.reply("📋 오늘의 출석 랭킹\n" + list);
+    } else {
+      replier.reply("오늘은 아직 아무도 출석하지 않았어요. 😢");
     }
-    replier.reply("📋 오늘의 출석 랭킹\n" + list);
-  } else {
-    replier.reply("오늘은 아직 아무도 출석하지 않았어요. 😢");
+    return;
   }
-  return;
-}
-// !출석통계 - 모든 멤버의 누적 및 평균 등수
-if (msg == "!출석통계") {
-  var keys = Object.keys(attendanceStats);
-  if (keys.length === 0) {
-    replier.reply("아직 출석한 사용자가 없습니다. 😢");
-  } else {
-    var list = "📊 전체 출석 통계\n";
-    keys.sort((a, b) => {
-      var t1 = attendanceStats[a]?.total || 0;
-      var t2 = attendanceStats[b]?.total || 0;
-      if (t1 !== t2) return t2 - t1;
-      var r1 = attendanceStats[a]?.ranks || [];
-      var r2 = attendanceStats[b]?.ranks || [];
-      var avg1 = r1.length ? r1.reduce((x,y)=>x+y)/r1.length : Infinity;
-      var avg2 = r2.length ? r2.reduce((x,y)=>x+y)/r2.length : Infinity;
-      return avg1 - avg2;
-    });
-    for (var i = 0; i < keys.length; i++) {
-      var uname = keys[i];
-      var stats = attendanceStats[uname];
-      var avg = stats.ranks.length ? (stats.ranks.reduce((a,b)=>a+b)/stats.ranks.length).toFixed(2) : "N/A";
-      list += `- ${uname}: ${stats.total}일 출석, 평균 등수 ${avg}\n`;
+  // !출석통계 - 모든 멤버의 누적 및 평균 등수
+  if (msg == "!출석통계") {
+    var keys = Object.keys(attendanceStats);
+    if (keys.length === 0) {
+      replier.reply("아직 출석한 사용자가 없습니다. 😢");
+    } else {
+      var list = "📊 전체 출석 통계\n";
+      keys.sort((a, b) => {
+        var t1 = attendanceStats[a]?.total || 0;
+        var t2 = attendanceStats[b]?.total || 0;
+        if (t1 !== t2) return t2 - t1;
+        var r1 = attendanceStats[a]?.ranks || [];
+        var r2 = attendanceStats[b]?.ranks || [];
+        var avg1 = r1.length ? r1.reduce((x, y) => x + y) / r1.length : Infinity;
+        var avg2 = r2.length ? r2.reduce((x, y) => x + y) / r2.length : Infinity;
+        return avg1 - avg2;
+      });
+      for (var i = 0; i < keys.length; i++) {
+        var uname = keys[i];
+        var stats = attendanceStats[uname];
+        var avg = stats.ranks.length ? (stats.ranks.reduce((a, b) => a + b) / stats.ranks.length).toFixed(2) : "N/A";
+        list += `- ${uname}: ${stats.total}일 출석, 평균 등수 ${avg}\n`;
+      }
+      replier.reply(list);
     }
-    replier.reply(list);
+    return;
   }
-  return;
-}
   if (msg == "!결석" || msg == "!석출") {
     var emoji = shameEmojis[Math.floor(Math.random() * shameEmojis.length)];
     replier.reply("재미없어요 " + emoji);
