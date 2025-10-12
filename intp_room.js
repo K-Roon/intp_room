@@ -96,8 +96,8 @@ function isAttendanceTime() {
   var isWeekend = (day === 0 || day === 6);
   var minutes = now.getHours() * 60 + now.getMinutes();
 
-  var start = isWeekend ? 360  : 420; // 주말 06:00, 평일 07:00
-  var end   = isWeekend ? 780  : 720; // 주말 13:00, 평일 12:00
+  var start = isWeekend ? 360 : 420; // 주말 06:00, 평일 07:00
+  var end = isWeekend ? 780 : 720; // 주말 13:00, 평일 12:00
 
   return minutes >= start && minutes <= end;
 }
@@ -133,13 +133,48 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   loadData();
   resetAttendanceIfNewDay();
   var name = getUnifiedSenderName(sender);
+  var shouldReply = Math.random() < 0.5;
+
   if (name != "권재현") {
-  if (!chatCount[name]) chatCount[name] = 0;
-  chatCount[name] += isDoubleUpTime() ? 2 : 1;
-  saveData();
-}
+    if (!chatCount[name]) chatCount[name] = 0;
+    chatCount[name] += isDoubleUpTime() ? 2 : 1;
+    saveData();
+  }
   var today = new Date().toLocaleDateString();
-  // 관리자 명령어
+
+  if (msg.startsWith("🎉 환영합니다! 🎉")) {
+    var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
+    replier.reply("안녕하세요! 바로 하트인증부터 해주시고, 부르기 쉬운 한글 닉네임으로 변경해주세요! 그리고 공지 읽어요!" + emoji);
+    return;
+  }
+
+  if (msg.startsWith("안녕하세요")) {
+    var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
+    replier.reply("반가워요! " + emoji);
+    return;
+  }
+
+  if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") {
+    replier.reply("이 방은 존댓말 필수입니다. 공지 확인해주세요.");
+    return;
+  }
+
+  if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") {
+    replier.reply("(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)");
+    return;
+  }
+
+  if (msg == "출석") {
+    replier.reply("\"!출석\" 을 입력해야 출석 완료!");
+    return;
+  }
+
+  if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") {
+    replier.reply("이 메시지가 전송된다면 살아있다는 것 입니다.");
+    return;
+  }
+
+  // 관리자 전용 명령어
   if (sender == "권재현") {
     if (msg == "!출석초기화") {
       attendanceList = {};
@@ -171,32 +206,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       return;
     }
   }
-  if (msg.startsWith("🎉 환영합니다! 🎉")) {
-    var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
-    replier.reply("안녕하세요! 공지 꼭 읽어주시고, 인사하고, 하트 인증 + 닉네임 변경 부탁드립니다!" + emoji);
-    return;
-  }
-  if (msg.startsWith("안녕하세요")) {
-    var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
-    replier.reply("반가워요! " + emoji);
-    return;
-  }
-  if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") {
-    replier.reply("이 방은 존댓말 필수입니다. 공지 확인해주세요.");
-    return;
-  }
-  if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") {
-    replier.reply("(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)");
-    return;
-  }
-  if (msg == "출석") {
-    replier.reply("\"!출석\" 을 입력해야 출석 완료!");
-    return;
-  }
-  if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") {
-    replier.reply("이 메시지가 전송된다면 살아있다는 것 입니다.");
-    return;
-  }
+
+  // 당일 아침출석 기록하기
   if (msg == "!출석") {
     if (!isAttendanceTime()) {
       replier.reply("⏰ 출석 가능 시간이 아닙니다.\n\n출석 가능 시간은 아래와 같습니다.\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
@@ -215,7 +226,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       if (name != "권재현") {
         attendanceList[today].push({ sender: sender, time: new Date() });
 
-        // ✅ 출석 통계에 반영
+        // 출석 통계에 반영
         var rank = attendanceList[today].length;
         if (!attendanceStats[name]) {
           attendanceStats[name] = {
@@ -284,15 +295,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
-  if (msg == "!결석" || msg == "!석출" || msg == "석출" || msg == "!노잼") {
-    var emoji = shameEmojis[Math.floor(Math.random() * shameEmojis.length)];
-    replier.reply("재미없어요 " + emoji);
-    return;
-  }
-  if (msg == "ㅋ") {
-    replier.reply("‍ㅋ‍");
-    return;
-  }
+
+  // 본인 채팅 수
   if (msg === "!채팅수") {
     var count = chatCount[name] || 0;
     var res = sender + "님이 쓴 채팅 수는 " + count + "개에요. 💬";
@@ -301,6 +305,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     replier.reply(res);
     return;
   }
+
+  // 타인 채팅 수
   if (msg.startsWith("!채팅수 ")) {
     var targetInput = msg.substring(5).trim();
     var target = getUnifiedSenderName(targetInput);
@@ -315,6 +321,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
+
+  // 채팅 랭킹 상위 10
   if (msg == "!채팅랭킹") {
     var sorted = [];
     for (var user in chatCount) {
@@ -336,20 +344,28 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
+
+  //랜덤 명언 추출
   if (msg == "!명언") {
     replier.reply(quotes[Math.floor(Math.random() * quotes.length)]);
     return;
   }
+
+  // 밥추천
   if (msg == "!밥" || msg == "밥" || msg == "점메추" || msg == "저메추" || msg == "메뉴추천") {
     var food = foodList[Math.floor(Math.random() * foodList.length)];
     replier.reply(sender + "님,\n오늘은 '" + food + "' 어떠세요? 🍽️");
     return;
   }
-  if (msg == "!디저트" || msg == "디저트"|| msg == "후식"|| msg == "후식추천") {
+
+  // 후식추천
+  if (msg == "!디저트" || msg == "디저트" || msg == "후식" || msg == "후식추천") {
     var dessert = dessertList[Math.floor(Math.random() * dessertList.length)];
     replier.reply(sender + "님,\n디저트는 '" + dessert + "' 추천드려요! 🍰");
     return;
   }
+
+  // 운세+로또
   if (msg == "!운세") {
     var today = new Date().toLocaleDateString();
     var name = getUnifiedSenderName(sender);
@@ -374,7 +390,9 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     replier.reply(sender + " 님의 오늘의 운세입니다. 🔮\n\n" + fortuneList[today][name] + "\n\n🎲로또 추천 번호: " + nums.join(", ") + "\n주의사항: 해당 기능은 당첨여부를 보장하지 않습니다.");
     return;
   }
-  if (msg == "사용법" || msg == "봇" || msg == "!") {
+
+  // 도움말
+  if (msg == "사용법" || msg == "봇" || msg == "도움말" || msg == "!") {
     replier.reply("📌 채팅봇 기능안내\n" + "1. !출석 – 오늘의 아침출석을 기록해요 🎉\n" +
       "2. !출석랭킹 – 오늘 출석한 사람 목록 📋\n" +
       "3. !출석통계 – 누적 출석일자 및 평균 등수 통계 📋\n" +
@@ -385,10 +403,12 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       "8. !명언 – 랜덤 명언 📝\n" +
       "9. !운세 – 오늘의 운세 그리고 적합한 로또 보기 🔮\n" +
       "문제 발생(무응답 등) 시 토리님에게 문의 부탁드립니다.\n" +
-      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 1.2.0)\n" +
+      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 1.2.1)\n" +
       "약관 및 자세한 내용은 \"!주의사항\" 커멘드를 입력해 확인해주세요.");
     return;
   }
+
+  // 방장봇 주의사항
   if (msg == "!주의사항") {
     replier.reply("⚠️주의사항⚠️\n" +
       "1. 채팅봇은 원활한 구동을 보장하지 않습니다. 간혹 1초이내에 많은 채팅이 오갈경우 1개만 응답될 수 있습니다.\n" +
@@ -401,6 +421,59 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       "7. 해당 봇은 AI가 아닙니다. 정확한 답변을 요구하지 마십시오.");
     return;
   }
+
+  // 이하는 이스터에그
+  if (msg == "!결석" || msg == "!석출" || msg == "석출" || msg == "!노잼") {
+    var emoji = shameEmojis[Math.floor(Math.random() * shameEmojis.length)];
+    replier.reply("재미없어요 " + emoji);
+    return;
+  }
+
+  // 답변을 할지말지 정하고보는 킹받는 이스터에그
+  if (shouldReply) {
+    if (msg === "ㅋ") {
+      replier.reply("ㅋ‍‍");
+      return;
+    }
+    if (msg === "ㅋㅋ") {
+      replier.reply("ㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋㅋㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋㅋㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅋㅋㅋㅋㅋㅋㅋㅋ") {
+      replier.reply("ㅋㅋㅋㅋㅋㅋㅋㅋ‍");
+      return;
+    }
+    if (msg === "ㅎ") {
+      replier.reply("ㅎ‍‍");
+      return;
+    }
+    if (msg === "ㅎㅎ") {
+      replier.reply("ㅎㅎ‍‍");
+      return;
+    }
+  }
+
+
 }
 function onCreate(savedInstanceState, activity) {
   let textView = new android.widget.TextView(activity);
