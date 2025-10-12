@@ -148,6 +148,17 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     return;
   }
 
+
+  if (msg.startsWith("보이스룸이 방금")) {
+    replier.reply("보이스룸이 시작되었어요! 어떤 이야기들이 오갈까요?!");
+    return;
+  }
+
+  if (msg.startsWith("보이스룸 종료")) {
+    replier.reply("수고하셨습니다!");
+    return;
+  }
+
   if (msg.startsWith("안녕하세요")) {
     var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
     replier.reply("반가워요! " + emoji);
@@ -403,7 +414,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       "8. !명언 – 랜덤 명언 📝\n" +
       "9. !운세 – 오늘의 운세 그리고 적합한 로또 보기 🔮\n" +
       "문제 발생(무응답 등) 시 토리님에게 문의 부탁드립니다.\n" +
-      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 1.2.1)\n" +
+      "채팅봇은 안정적인 구동을 보장하지 않습니다. (Version 1.3.1)\n" +
       "약관 및 자세한 내용은 \"!주의사항\" 커멘드를 입력해 확인해주세요.");
     return;
   }
