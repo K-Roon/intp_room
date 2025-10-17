@@ -51,21 +51,20 @@ var fortunes = [
   "🎲 모험적인 선택이 오히려 안전해집니다. 확률보단 의지를 따라가세요.",
   "🎈 마음을 가볍게 하는 유머가 필요합니다. 스스로를 웃길 만한 영상을 찾아보세요."
 ];
-var helloEmojis = ["😊","😄","🙌","👋","✨","😎","🤗"];
-var shameEmojis = ["😒","🙄","😑","🤦","🤷","👎","🥱","😱","🫥","😭"];
+var helloEmojis = ["😊", "😄", "🙌", "👋", "✨", "😎", "🤗"];
+var shameEmojis = ["😒", "🙄", "😑", "🤦", "🤷", "👎", "🥱", "😱", "🫥", "😭"];
 
 /***** 런타임 메모리 *****/
 var attendanceList = {};
 var attendanceStats = {};
-var chatCount = {};     // 확장: { [name]: { count, lastChatAt } } (구버전 number와 호환)
-var memberPoints = {};  // ✅ 신설: { [name]: points }
+var chatCount = {};     // { [name]: { count, lastChatAt } }
+var memberPoints = {};  // { [name]: points }
 var lastDate = "";
 var fortuneList = {};
 
-/***** 공통 유틸 *****/
+/***** 유틸 *****/
 function toKSTString(d) {
   try {
-    // KST(UTC+9) 기준 포맷: YYYY-MM-DD HH:mm:ss KST
     var tzDate = new Date(d.getTime() + (9 * 60 - d.getTimezoneOffset()) * 60000);
     var yyyy = tzDate.getUTCFullYear();
     var mm = String(tzDate.getUTCMonth() + 1).padStart(2, '0');
@@ -73,86 +72,51 @@ function toKSTString(d) {
     var HH = String(tzDate.getUTCHours()).padStart(2, '0');
     var MM = String(tzDate.getUTCMinutes()).padStart(2, '0');
     var SS = String(tzDate.getUTCSeconds()).padStart(2, '0');
-    return yyyy + "-" + mm + "-" + dd + " " + HH + ":" + MM + ":" + SS + " KST";
+    return yyyy + "-" + mm + "-" + dd + " " + HH + ":" + MM + ":" + SS;
   } catch (e) {
-    return new Date().toLocaleString() + " KST";
+    return new Date().toLocaleString();
   }
 }
-
-function getTodayKey() {
-  return new Date().toLocaleDateString(); // 플랫폼 기본 지역 로케일 날짜(기존 코드 유지)
-}
-
+function getTodayKey() { return new Date().toLocaleDateString(); }
 function getUnifiedSenderName(sender) {
   for (var emoji in identifierEmojiMap) {
     if (sender.indexOf(emoji) !== -1) return identifierEmojiMap[emoji];
   }
   return sender;
 }
-
 function ensureChatRecord(name) {
-  if (!chatCount[name]) {
-    chatCount[name] = { count: 0, lastChatAt: null };
-    return;
-  }
-  // 구버전 호환: 숫자만 저장되어 있던 케이스
-  if (typeof chatCount[name] === "number") {
-    chatCount[name] = { count: chatCount[name], lastChatAt: null };
-  } else {
-    // 필드 안전 보강
-    if (typeof chatCount[name].count !== "number") chatCount[name].count = 0;
-    if (typeof chatCount[name].lastChatAt !== "string" && chatCount[name].lastChatAt !== null) chatCount[name].lastChatAt = null;
-  }
+  if (!chatCount[name]) { chatCount[name] = { count: 0, lastChatAt: null }; return; }
+  if (typeof chatCount[name] === "number") chatCount[name] = { count: chatCount[name], lastChatAt: null };
+  if (typeof chatCount[name].count !== "number") chatCount[name].count = 0;
+  if (typeof chatCount[name].lastChatAt !== "string" && chatCount[name].lastChatAt !== null) chatCount[name].lastChatAt = null;
 }
-
 function addChatCountAndStamp(name) {
   ensureChatRecord(name);
   chatCount[name].count += 1;
   chatCount[name].lastChatAt = toKSTString(new Date());
 }
-
 function addPoints(name, base) {
-  if (name === "권재현") return; // 제외 정책 유지
+  if (name === "권재현") return; // 제외
   if (!memberPoints[name]) memberPoints[name] = 0;
   var delta = base;
-  if (isDoubleUpTime()) delta *= 2; // ✅ 점수 더블업 (출석/채팅 공통)
+  if (isDoubleUpTime()) delta *= 2; // 점수 더블업
   memberPoints[name] += delta;
 }
-
-function safeReply(replier, text) {
-  try { replier.reply(text); } catch (e) {}
-}
+function safeReply(replier, text) { try { replier.reply(text); } catch (e) { } }
 
 /***** 데이터 로드/저장 *****/
 function loadData() {
-  try {
-    attendanceList = JSON.parse(DataBase.getDataBase(ATTENDANCE_FILE) || "{}");
-  } catch (e) { attendanceList = {}; }
-
-  try {
-    attendanceStats = JSON.parse(DataBase.getDataBase(ATTENDANCE_STAT_FILE) || "{}");
-  } catch (e) { attendanceStats = {}; }
-
+  try { attendanceList = JSON.parse(DataBase.getDataBase(ATTENDANCE_FILE) || "{}"); } catch (e) { attendanceList = {}; }
+  try { attendanceStats = JSON.parse(DataBase.getDataBase(ATTENDANCE_STAT_FILE) || "{}"); } catch (e) { attendanceStats = {}; }
   try {
     var raw = DataBase.getDataBase(CHAT_FILE) || "{}";
     chatCount = JSON.parse(raw);
-    // 구버전 호환 보정
     for (var k in chatCount) ensureChatRecord(k);
   } catch (e) { chatCount = {}; }
-
-  try {
-    fortuneList = JSON.parse(DataBase.getDataBase(FORTUNE_FILE) || "{}");
-  } catch (e) { fortuneList = {}; }
-
-  try {
-    memberPoints = JSON.parse(DataBase.getDataBase(POINT_FILE) || "{}");
-  } catch (e) { memberPoints = {}; }
-
-  try {
-    lastDate = DataBase.getDataBase(DATE_FILE) || getTodayKey();
-  } catch (e) { lastDate = getTodayKey(); }
+  try { fortuneList = JSON.parse(DataBase.getDataBase(FORTUNE_FILE) || "{}"); } catch (e) { fortuneList = {}; }
+  try { memberPoints = JSON.parse(DataBase.getDataBase(POINT_FILE) || "{}"); } catch (e) { memberPoints = {}; }
+  try { lastDate = DataBase.getDataBase(DATE_FILE) || getTodayKey(); } catch (e) { lastDate = getTodayKey(); }
 }
-
 function saveData() {
   try {
     DataBase.setDataBase(ATTENDANCE_FILE, JSON.stringify(attendanceList));
@@ -161,34 +125,30 @@ function saveData() {
     DataBase.setDataBase(FORTUNE_FILE, JSON.stringify(fortuneList));
     DataBase.setDataBase(POINT_FILE, JSON.stringify(memberPoints));
     DataBase.setDataBase(DATE_FILE, lastDate);
-  } catch (e) {
-    Log.error("❌ 저장 오류: " + e);
-  }
+  } catch (e) { Log.error("❌ 저장 오류: " + e); }
 }
-
 function resetAttendanceIfNewDay() {
   var today = getTodayKey();
   if (today != lastDate) {
     attendanceList = {};
-    fortuneList = {}; // 운세 하루 단위 초기화
+    fortuneList = {};
     lastDate = today;
     saveData();
   }
 }
 
 /***** 시간 규칙 *****/
-// ✅ 아침출석 시간 규칙: 평일 07:00~12:00, 주말 06:00~13:00
+// 출석: 평일 07:00~12:00, 주말 06:00~13:00
 function isAttendanceTime() {
   var now = new Date();
-  var day = now.getDay(); // 0=일, 6=토
+  var day = now.getDay(); // 0=일,6=토
   var isWeekend = (day === 0 || day === 6);
   var minutes = now.getHours() * 60 + now.getMinutes();
-  var start = isWeekend ? 360 : 420; // 주말 06:00, 평일 07:00
-  var end = isWeekend ? 780 : 720;   // 주말 13:00, 평일 12:00
+  var start = isWeekend ? 360 : 420;
+  var end = isWeekend ? 780 : 720;
   return minutes >= start && minutes <= end;
 }
-
-// ✅ 점수 더블업 시간: (기존 채팅 더블업 시간 정의 재사용)
+// 점수 더블업 시간(채팅/출석 점수 공통 적용)
 function isDoubleUpTime() {
   var now = new Date();
   var day = now.getDay();
@@ -202,7 +162,7 @@ function isDoubleUpTime() {
   return false;
 }
 
-/***** 출석 처리 (수동 + 자동) *****/
+/***** 출석 처리 *****/
 function hasAttendedToday(name) {
   var today = getTodayKey();
   if (!attendanceList[today]) return false;
@@ -210,125 +170,66 @@ function hasAttendedToday(name) {
     return getUnifiedSenderName(e.sender) === name;
   });
 }
-
 function pushAttendance(name, sender) {
   var today = getTodayKey();
   if (!attendanceList[today]) attendanceList[today] = [];
   attendanceList[today].push({ sender: sender, time: new Date() });
   var rank = attendanceList[today].length;
-
-  // 출석 통계 반영
-  if (!attendanceStats[name]) {
-    attendanceStats[name] = { total: 1, ranks: [rank] };
-  } else {
-    attendanceStats[name].total++;
-    attendanceStats[name].ranks.push(rank);
-  }
-  // 점수 +10p (더블업 시간엔 2배)
-  addPoints(name, 10);
-
+  if (!attendanceStats[name]) attendanceStats[name] = { total: 1, ranks: [rank] };
+  else { attendanceStats[name].total++; attendanceStats[name].ranks.push(rank); }
+  addPoints(name, 10); // 출석 10p (+더블업)
   return rank;
 }
 
-/***** 응답 메인 *****/
+/***** 메인 응답 *****/
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   loadData();
   resetAttendanceIfNewDay();
 
   var unifiedName = getUnifiedSenderName(sender);
 
-  // 1) 채팅 기록/마지막 채팅시각/KST 저장 + 점수 1p (+더블업)
+  // 채팅 기록/마지막 채팅시간/KST 저장 + 점수 1p (+더블업)
   if (unifiedName !== "권재현") {
-    addChatCountAndStamp(unifiedName);  // count+1 & lastChatAt
-    addPoints(unifiedName, 1);          // 채팅 1p (더블업 반영)
+    addChatCountAndStamp(unifiedName);
+    addPoints(unifiedName, 1);
     saveData();
   }
 
-  // 2) 자동 출석 처리 (출석 시간 내 & 아직 출석 X → 1회만 안내)
+  // 자동 출석 (출석시간 & 미출석 시 1회만 안내)
   if (isAttendanceTime() && unifiedName !== "권재현") {
     if (!hasAttendedToday(unifiedName)) {
       var rank = pushAttendance(unifiedName, sender);
       saveData();
       var medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "";
       safeReply(replier, unifiedName + " 님, " + rank + "등으로 출석 완료했어요! " + medal + " 🎉");
-      // 자동 출석 알림은 최초 1회만 전송됨
     }
   }
 
-  // ====== 기존 일반 멘트들 ======
-  if (msg.startsWith("🎉 환영합니다! 🎉")) {
-    var emoji = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
-    safeReply(replier, "안녕하세요! 바로 하트인증부터 해주시고, 부르기 쉬운 한글 닉네임으로 변경해주세요! 그리고 공지 읽어요!" + emoji);
-    return;
-  }
-  if (msg.startsWith("보이스룸이 방금")) {
-    safeReply(replier, "보이스룸이 시작되었어요! 어떤 이야기들이 오갈까요?!");
-    return;
-  }
-  if (msg.startsWith("보이스룸 종료")) {
-    safeReply(replier, "보이스룸이 종료되었습니다. 모두 수고하셨습니다!");
-    return;
-  }
-  if (msg.startsWith("안녕하세요")) {
-    var emoji2 = helloEmojis[Math.floor(Math.random() * helloEmojis.length)];
-    safeReply(replier, "반가워요! " + emoji2);
-    return;
-  }
-  if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") {
-    safeReply(replier, "이 방은 존댓말 필수입니다. 공지 확인해주세요.");
-    return;
-  }
-  if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") {
-    safeReply(replier, "(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)");
-    return;
-  }
-  if (msg == "출석") {
-    safeReply(replier, "\"!출석\" 을 입력해야 출석 완료!");
-    return;
-  }
-  if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") {
-    safeReply(replier, "이 메시지가 전송된다면 살아있다는 것 입니다.");
-    return;
-  }
+  // ===== 기본 멘트들 (생략 가능) =====
+  if (msg.startsWith("🎉 환영합니다! 🎉")) { safeReply(replier, "안녕하세요! 하트인증 & 한글 닉변 부탁해요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
+  if (msg.startsWith("보이스룸이 방금")) { safeReply(replier, "보이스룸이 시작되었어요! 어떤 이야기들이 오갈까요?!"); return; }
+  if (msg.startsWith("보이스룸 종료")) { safeReply(replier, "보이스룸이 종료되었습니다. 모두 수고하셨습니다!"); return; }
+  if (msg.startsWith("안녕하세요")) { safeReply(replier, "반가워요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
+  if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") { safeReply(replier, "이 방은 존댓말 필수입니다. 공지 확인해주세요."); return; }
+  if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") { safeReply(replier, "(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)"); return; }
+  if (msg == "출석") { safeReply(replier, "\"!출석\" 을 입력해야 출석 완료!"); return; }
+  if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") { safeReply(replier, "이 메시지가 전송된다면 살아있다는 것 입니다."); return; }
 
-  // ====== 관리자 명령 ======
+  // ===== 관리자 명령 =====
   if (sender == "권재현") {
-    if (msg == "!출석초기화") {
-      attendanceList = {};
-      attendanceStats = {};
-      saveData();
-      safeReply(replier, "✅ 출석 데이터를 초기화했어요.");
-      return;
-    }
-    if (msg == "!채팅초기화") {
-      chatCount = {};
-      saveData();
-      safeReply(replier, "✅ 채팅 수 데이터를 초기화했어요.");
-      return;
-    }
-    if (msg == "!운세초기화") {
-      fortuneList = {};
-      saveData();
-      safeReply(replier, "✅ 운세로 정해진 운명. 그 데이터를 초기화했어요.");
-      return;
-    }
+    if (msg == "!출석초기화") { attendanceList = {}; attendanceStats = {}; saveData(); safeReply(replier, "✅ 출석 데이터를 초기화했어요."); return; }
+    if (msg == "!채팅초기화") { chatCount = {}; saveData(); safeReply(replier, "✅ 채팅 수 데이터를 초기화했어요."); return; }
+    if (msg == "!운세초기화") { fortuneList = {}; saveData(); safeReply(replier, "✅ 운세 데이터를 초기화했어요."); return; }
     if (msg == "!전체초기화") {
-      attendanceList = {};
-      attendanceStats = {};
-      chatCount = {};
-      memberPoints = {};
-      fortuneList = {};
-      lastDate = getTodayKey();
-      saveData();
-      safeReply(replier, "✅ 전체 데이터를 초기화했어요.");
-      return;
+      attendanceList = {}; attendanceStats = {}; chatCount = {}; memberPoints = {}; fortuneList = {}; lastDate = getTodayKey();
+      saveData(); safeReply(replier, "✅ 전체 데이터를 초기화했어요."); return;
     }
   }
 
-  // ====== 수동 출석 명령 (!출석) ======
+  // ===== 출석 명령 =====
   if (msg == "!출석") {
     if (!isAttendanceTime()) {
-      safeReply(replier, "⏰ 출석 가능 시간이 아닙니다.\n\n출석 가능 시간은 아래와 같습니다.\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
+      safeReply(replier, "⏰ 출석 가능 시간이 아닙니다.\n\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
       return;
     }
     if (!hasAttendedToday(unifiedName)) {
@@ -341,19 +242,18 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         safeReply(replier, "관리자는 출석 집계에서 제외됩니다.");
       }
     } else {
-      safeReply(replier, unifiedName + " 님은 이미 출석하셨어요. 😊"); // ✅ 이미 출석: !출석에만 안내
+      safeReply(replier, unifiedName + " 님은 이미 출석하셨어요. 😊"); // 이미 출석: !출석 입력 시에만 안내
     }
     return;
   }
 
-  // ====== 출석 랭킹/통계 (기존 유지) ======
+  // ===== 출석 통계/랭킹 (유지) =====
   if (msg == "!출석랭킹") {
     var todayKey = getTodayKey();
     if (attendanceList[todayKey] && attendanceList[todayKey].length > 0) {
       var list = "";
       for (var i = 0; i < attendanceList[todayKey].length; i++) {
         var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-        // 고정닉 표기
         var shown = getUnifiedSenderName(attendanceList[todayKey][i].sender);
         list += (i + 1) + "등: " + shown + " " + medal + "\n";
       }
@@ -364,27 +264,25 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     return;
   }
-
   if (msg == "!출석통계") {
     var keys = Object.keys(attendanceStats);
-    if (keys.length === 0) {
-      safeReply(replier, "아직 출석한 사용자가 없습니다. 😢");
-    } else {
+    if (keys.length === 0) safeReply(replier, "아직 출석한 사용자가 없습니다. 😢");
+    else {
       var list = "📊 전체 출석 통계\n";
-      keys.sort(function(a, b) {
+      keys.sort(function (a, b) {
         var t1 = (attendanceStats[a] && attendanceStats[a].total) || 0;
         var t2 = (attendanceStats[b] && attendanceStats[b].total) || 0;
         if (t1 !== t2) return t2 - t1;
         var r1 = (attendanceStats[a] && attendanceStats[a].ranks) || [];
         var r2 = (attendanceStats[b] && attendanceStats[b].ranks) || [];
-        var avg1 = r1.length ? r1.reduce(function(x, y){ return x + y; }) / r1.length : Infinity;
-        var avg2 = r2.length ? r2.reduce(function(x, y){ return x + y; }) / r2.length : Infinity;
+        var avg1 = r1.length ? r1.reduce(function (x, y) { return x + y; }) / r1.length : Infinity;
+        var avg2 = r2.length ? r2.reduce(function (x, y) { return x + y; }) / r2.length : Infinity;
         return avg1 - avg2;
       });
       for (var i = 0; i < keys.length; i++) {
         var uname = keys[i];
         var stats = attendanceStats[uname];
-        var avg = stats.ranks.length ? (stats.ranks.reduce(function(a, b){ return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
+        var avg = stats.ranks.length ? (stats.ranks.reduce(function (a, b) { return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
         list += "- " + uname + ": " + stats.total + "일 출석 | 평균 등수 " + avg + "\n";
       }
       list += "상위권에 계신 분들 모두 축하합니다!";
@@ -393,106 +291,133 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     return;
   }
 
-  // ====== 채팅 관련 ======
-  if (msg === "!채팅수") {
+  // ===== 새 명령어: !나 (내 정보 + 평균등수) =====
+  if (msg === "!나") {
     ensureChatRecord(unifiedName);
-    var count = chatCount[unifiedName].count || 0;
-    var res = unifiedName + " 님이 쓴 채팅 수는 " + count + "개에요. 💬";
-    if (count < 50) res += "\n조금 더 분발해 주세요! 💪";
-    safeReply(replier, res);
-    return;
-  }
+    var myCount = chatCount[unifiedName].count || 0;
+    var myLast = chatCount[unifiedName].lastChatAt ? chatCount[unifiedName].lastChatAt : "기록 없음";
+    var myAttend = (attendanceStats[unifiedName] && attendanceStats[unifiedName].total) ? attendanceStats[unifiedName].total : 0;
+    var myPoint = memberPoints[unifiedName] || 0;
 
-  if (msg.startsWith("!채팅수 ")) {
-    var targetInput = msg.substring("!채팅수".length).trim();
-    var target = getUnifiedSenderName(targetInput);
-    if (chatCount[target] != null) {
-      ensureChatRecord(target);
-      var cnt = chatCount[target].count || 0;
-      var res2 = target + " 님의 누적 채팅 수는 " + cnt + "개에요. 💬";
-      if (cnt < 20) res2 += "\n조금 더 분발해 주세요! 💪";
-      safeReply(replier, res2);
-    } else {
-      safeReply(replier, target + " 님의 채팅 기록이 없어요. 💭");
+    // 평균 등수 계산 (출석통계의 ranks 배열 기반)
+    var avgRank = "N/A";
+    if (attendanceStats[unifiedName] && Array.isArray(attendanceStats[unifiedName].ranks) && attendanceStats[unifiedName].ranks.length > 0) {
+      var rks = attendanceStats[unifiedName].ranks;
+      var sum = 0;
+      for (var i = 0; i < rks.length; i++) sum += (typeof rks[i] === "number" ? rks[i] : 0);
+      avgRank = (sum / rks.length).toFixed(2) + "등";
     }
+
+    // 헤더: "나의 정보(토리)" 형태 (고정닉 표시)
+    var headerName = unifiedName;
+    var header = "나의 정보(" + headerName + ")";
+
+    var text = header + "\n"
+      + "점수 " + myPoint + "점 | 채팅수 " + myCount + "개\n"
+      + "출석 " + myAttend + "일 | 평균 " + avgRank + "\n"
+      + "마지막 채팅일시 " + myLast;
+
+    safeReply(replier, text);
     return;
   }
 
-  // ✅ 채팅랭킹 → 채팅통계 (TOP10 + 마지막 채팅일시(KST) 표시, 누락 안전)
-  if (msg == "!채팅통계") {
-    var arr = [];
-    for (var user in chatCount) {
-      ensureChatRecord(user);
-      arr.push([user, chatCount[user].count, chatCount[user].lastChatAt]);
+
+  // ===== 새 명령어: !남 (닉) (상대 정보 + 평균등수) =====
+  if (msg.startsWith("!남 ")) {
+    var raw = msg.substring("!남".length).trim();
+    var targetName = getUnifiedSenderName(raw);
+    if (!targetName) { safeReply(replier, "대상 닉네임을 입력해주세요. 예) !남 환생"); return; }
+
+    var hasAny =
+      (chatCount[targetName] != null) ||
+      (memberPoints[targetName] != null) ||
+      (attendanceStats[targetName] != null);
+
+    if (!hasAny) {
+      safeReply(replier, targetName + " 님의 기록이 없어요.");
+      return;
     }
-    arr.sort(function(a, b){ return b[1] - a[1]; });
-    arr = arr.slice(0, 10);
 
-    if (arr.length == 0) {
-      safeReply(replier, "아직 아무도 채팅한 기록이 없어요. 😢");
-    } else {
-      var text = "💬 채팅 통계 TOP 10\n";
-      for (var i = 0; i < arr.length; i++) {
-        var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-        var uname = arr[i][0];
-        var cnt = arr[i][1];
-        var last = arr[i][2] ? arr[i][2] : "기록 없음";
-        text += (i + 1) + "위: " + uname + " - " + cnt + "개 " + medal + " | 마지막 채팅: " + last + "\n";
-      }
-      text += "활발한 대화 감사해요!";
-      safeReply(replier, text);
+    ensureChatRecord(targetName);
+    var tCount = (chatCount[targetName] && chatCount[targetName].count) ? chatCount[targetName].count : 0;
+    var tLast = (chatCount[targetName] && chatCount[targetName].lastChatAt) ? chatCount[targetName].lastChatAt : "기록 없음";
+    var tAttend = (attendanceStats[targetName] && attendanceStats[targetName].total) ? attendanceStats[targetName].total : 0;
+    var tPoint = memberPoints[targetName] || 0;
+
+    // 평균 등수 계산
+    var tAvg = "N/A";
+    if (attendanceStats[targetName] && Array.isArray(attendanceStats[targetName].ranks) && attendanceStats[targetName].ranks.length > 0) {
+      var trks = attendanceStats[targetName].ranks;
+      var tsum = 0;
+      for (var i = 0; i < trks.length; i++) tsum += (typeof trks[i] === "number" ? trks[i] : 0);
+      tAvg = (tsum / trks.length).toFixed(2) + "등";
     }
+
+    // 헤더: "환생 님의 정보"
+    var header2 = targetName + " 님의 정보";
+
+    var text2 = header2 + "\n"
+      + "점수 " + tPoint + "점 | 채팅수 " + tCount + "개\n"
+      + "출석 " + tAttend + "일 | 평균 " + tAvg + "\n"
+      + "마지막 채팅일시 " + tLast;
+
+    safeReply(replier, text2);
     return;
   }
 
-  // ====== 점수 조회/랭킹 (신규) ======
-  if (msg == "!점수") {
-    var p = memberPoints[unifiedName] || 0;
-    safeReply(replier, unifiedName + " 님의 현재 점수는 " + p + "p 입니다."
-      + (isDoubleUpTime() ? "\n(지금은 점수 더블업 시간! 적립 2배 적용중 ✌️)" : ""));
-    return;
-  }
 
-  if (msg.startsWith("!점수 ")) {
-    var tInput = msg.substring("!점수".length).trim();
-    var tname = getUnifiedSenderName(tInput);
-    var pv = memberPoints[tname] || 0;
-    safeReply(replier, tname + " 님의 현재 점수는 " + pv + "p 입니다.");
-    return;
-  }
 
-  if (msg == "!점수랭킹") {
-    var listP = [];
-    for (var u in memberPoints) listP.push([u, memberPoints[u]]);
-    listP.sort(function(a,b){ return b[1] - a[1]; });
-    listP = listP.slice(0, 10);
-    if (listP.length === 0) {
-      safeReply(replier, "아직 점수 데이터가 없어요. 😢");
-    } else {
-      var s = "🏅 점수 랭킹 TOP 10\n";
-      for (var i=0;i<listP.length;i++) {
-        var md = i==0?"🥇":i==1?"🥈":i==2?"🥉":"";
-        s += (i+1)+"위: "+listP[i][0]+" - "+listP[i][1]+"p "+md+"\n";
-      }
-      safeReply(replier, s);
+  // ===== 통합 통계: !멤버통계 (점수 내림차순, 동점 시 채팅수 내림차순, 공란 없이) =====
+  if (msg == "!멤버통계") {
+    var memberSet = {};
+    for (var u in memberPoints) memberSet[u] = true;
+    for (var u2 in chatCount) memberSet[u2] = true;
+    for (var u3 in attendanceStats) memberSet[u3] = true;
+
+    var rows = [];
+    for (var name in memberSet) {
+      if (name === "권재현") continue; // 필요 시 제거
+      ensureChatRecord(name);
+      var p = memberPoints[name] || 0;
+      var c = (chatCount[name] && chatCount[name].count) ? chatCount[name].count : 0;
+      var a = (attendanceStats[name] && attendanceStats[name].total) ? attendanceStats[name].total : 0;
+      var last = (chatCount[name] && chatCount[name].lastChatAt) ? chatCount[name].lastChatAt : "기록 없음";
+      rows.push({ name: name, point: p, chat: c, attend: a, last: last });
     }
+
+    if (rows.length === 0) {
+      safeReply(replier, "아직 멤버 통계를 표시할 데이터가 없어요. 😢");
+      return;
+    }
+
+    // 🔥 정렬: 점수 desc, 채팅수 desc
+    rows.sort(function (x, y) {
+      if (y.point !== x.point) return y.point - x.point;
+      return y.chat - x.chat;
+    });
+
+    // 🔥 출력: 공백 라인 없이
+    var out = "📈 멤버 통계 (점수 → 채팅수)\n";
+    for (var i = 0; i < rows.length; i++) {
+      var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
+      out += rows[i].name + (medal ? " " + medal : "") + " : "
+        + "점수 " + rows[i].point + "점 | 채팅수 " + rows[i].chat + "개 | " + rows[i].attend + "일 출석\n"
+        + "마지막 채팅일시 " + rows[i].last + (i < rows.length - 1 ? "\n" : "");
+    }
+    safeReply(replier, out);
     return;
   }
 
-  // ====== 기타 기능 유지 ======
-  if (msg == "!명언") {
-    safeReply(replier, quotes[Math.floor(Math.random() * quotes.length)]);
-    return;
-  }
+
+  // ===== 기타 기존 기능 유지 =====
+  if (msg == "!명언") { safeReply(replier, quotes[Math.floor(Math.random() * quotes.length)]); return; }
   if (msg == "!밥" || msg == "밥" || msg == "점메추" || msg == "저메추" || msg == "메뉴추천") {
     var food = foodList[Math.floor(Math.random() * foodList.length)];
-    safeReply(replier, unifiedName + " 님,\n오늘은 '" + food + "' 어떠세요? 🍽️");
-    return;
+    safeReply(replier, unifiedName + " 님,\n오늘은 '" + food + "' 어떠세요? 🍽️"); return;
   }
   if (msg == "!디저트" || msg == "디저트" || msg == "후식" || msg == "후식추천") {
     var dessert = dessertList[Math.floor(Math.random() * dessertList.length)];
-    safeReply(replier, unifiedName + " 님,\n디저트는 '" + dessert + "' 추천드려요! 🍰");
-    return;
+    safeReply(replier, unifiedName + " 님,\n디저트는 '" + dessert + "' 추천드려요! 🍰"); return;
   }
   if (msg == "!운세") {
     var tday = getTodayKey();
@@ -505,10 +430,10 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     var nums = [];
     while (nums.length < 6) {
-      var r = Math.floor(Math.random() * 45) + 1;
-      if (nums.indexOf(r) == -1) nums.push(r);
+      var rnum = Math.floor(Math.random() * 45) + 1;
+      if (nums.indexOf(rnum) == -1) nums.push(rnum);
     }
-    nums.sort(function(a,b){ return a - b; });
+    nums.sort(function (a, b) { return a - b; });
     safeReply(replier, unifiedName + " 님의 오늘의 운세입니다. 🔮\n\n"
       + fortuneList[tday][unifiedName]
       + "\n\n🎲로또 추천 번호: " + nums.join(", ")
@@ -519,17 +444,13 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   if (msg == "사용법" || msg == "봇" || msg == "도움말" || msg == "!") {
     safeReply(replier,
       "📌 채팅봇 기능안내\n"
-      + "1. !출석 – 오늘의 아침출석을 기록해요 (자동 출석 지원) 🎉\n"
-      + "2. !출석랭킹 – 오늘 출석한 사람 목록 📋\n"
-      + "3. !출석통계 – 누적 출석일자 및 평균 등수 통계 📋\n"
-      + "4. !채팅수 – 내 채팅 수 확인 💬\n"
-      + "5. !채팅통계 – 채팅 TOP10 + 마지막 채팅시각(KST) 📈\n"
-      + "6. !점수 / !점수 (닉) – 점수 확인 🧮\n"
-      + "7. !점수랭킹 – 점수 상위 TOP10 🏅\n"
-      + "8. !밥 – 추천 메뉴 🍽️ / !디저트 – 추천 디저트 🍰\n"
-      + "9. !명언 – 랜덤 명언 📝 / !운세 – 오늘의 운세 🔮\n"
-      + "※ 점수 더블업 시간엔 출석/채팅 점수가 2배 적립됩니다.\n"
-      + "문제 발생 시 토리님에게 문의 부탁드립니다. (Version 1.5)");
+      + "1. !출석 – 아침 출석 (자동 출석 지원) 🎉\n"
+      + "2. !출석랭킹 – 오늘 출석 목록 📋 / !출석통계 – 누적 출석 통계 📊\n"
+      + "3. !나 – 내 정보 확인하기🧑‍💻\n"
+      + "4. !남 (닉) – 남의 정보 확인하기👤\n"
+      + "5. !멤버통계 – 멤버 종합 통계(점수 순) 📈\n"
+      + "6. !밥 / !디저트 / !명언 / !운세: 각종 추천 기능 제공\n"
+      + "문제 발생 시 토리님에게 문의 부탁드립니다. (Version 2.0)");
     return;
   }
 
@@ -546,7 +467,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   }
 
   if (msg == "!브리핑") {
-    safeReply(replier, "매일 아침에 제공되는 AI기반 브리핑 서비스 입니다.\n❗️참고사항❗️"
+    safeReply(replier, "매일 아침에 제공되는 AI기반 브리핑 서비스 입니다.\n"
+      + "❗️참고사항❗️"
       + "기상상황은 예측에서 벗어날 수 있습니다.\n"
       + "기상관측위치 기준은 각 시•도청 혹은 전지역 기온/날씨의 평균입니다.\n"
       + "(단, 경기도 북부는 의정부에 위치한 경기도청북부청사 기준이며, 경기도 남부는 수원에 위치한 경기도청 기준)\n"
@@ -576,7 +498,7 @@ function onCreate(savedInstanceState, activity) {
   textView.setTextColor(android.graphics.Color.DKGRAY);
   activity.setContentView(textView);
 }
-function onStart(activity) {}
-function onResume(activity) {}
-function onPause(activity) {}
-function onStop(activity) {}
+function onStart(activity) { }
+function onResume(activity) { }
+function onPause(activity) { }
+function onStop(activity) { }
