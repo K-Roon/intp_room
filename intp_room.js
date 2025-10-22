@@ -776,7 +776,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         return;
       }
       if (msg === "!힌트") { giveHint(replier); return; }
-      if (msg === "!종료" && sender === "권재현") { stopQuiz(replier, "🛑 관리자가 퀴즈를 종료했습니다."); return; }
+      if (msg === "!종료") { stopQuiz(replier, "🛑 퀴즈를 종료했습니다."); return; }
       // 그 외 모든 !커맨드 차단
       safeReply(replier, "퀴즈 진행 중에는 '!정답', '!힌트'만 사용할 수 있어요.");
       return;
