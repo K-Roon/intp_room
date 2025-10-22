@@ -4,52 +4,168 @@ var ATTENDANCE_FILE = "attendance_list.txt";    // { [yyyy.m.d]: [{ sender, time
 var ATTENDANCE_STAT_FILE = "attendance_stats.txt"; // { [name]: { total: number, ranks: number[] } }
 var DATE_FILE = "last_date.txt";                // "yyyy.m.d"
 var FORTUNE_FILE = "fortuneList.txt";           // { [date]: { [name]: fortune } }
-var POINT_FILE = "memberPoints.txt";            // { [name]: number }  ✅ 신설: 멤버 점수 DB
+var POINT_FILE = "memberPoints.txt";            // { [name]: number }
 
 /***** 고정 이모지 → 고정 닉 *****/
 var identifierEmojiMap = {
-  "🪷": "토리",
-  "🐨": "코알",
-  "🐹": "소리",
-  "🐱": "쪼옥쪼옥",
-  "💗": "아잉",
-  "🤍": "환생",
-  "🌌": "민균"
+    "🪷": "토리",
+    "🐨": "코알",
+    "🐱": "쪼옥쪼옥",
+    "💗": "아잉",
 };
 
 var foodList = ["비빔밥", "불고기", "김치찌개", "된장찌개", "순두부찌개", "갈비탕", "설렁탕", "육개장", "삼계탕", "닭볶음탕", "보쌈", "족발", "제육볶음", "고등어조림", "갈치조림", "김치볶음밥", "볶음밥", "참치김밥", "치즈김밥", "돈까스", "치즈돈까스", "우동", "냉면", "물냉면", "비빔냉면", "잔치국수", "칼국수", "쫄면", "떡볶이", "순대", "오뎅", "라면", "참깨라면", "김치라면", "짜장면", "짬뽕", "마라탕", "샤브샤브", "스시", "연어덮밥", "규동", "텐동", "가츠동", "라멘", "우나기동", "차슈라멘", "피자", "치킨", "양념치킨", "후라이드치킨", "간장치킨", "마늘치킨", "핫윙", "버팔로윙", "파스타", "토마토파스타", "크림파스타", "알리오올리오", "라자냐", "리조또", "스테이크", "함박스테이크", "샐러드", "샌드위치", "햄버거", "불고기버거", "치즈버거", "더블치즈버거", "감자튀김", "핫도그", "토스트", "오므라이스", "김말이튀김", "군만두", "고로케", "베이컨덮밥", "닭갈비", "철판볶음밥", "삼겹살", "목살구이", "돼지불백", "차돌박이", "양꼬치", "곱창전골", "막창구이", "해물파전", "부추전", "계란말이", "소세지볶음", "참치마요덮밥", "우엉조림", "버섯전골", "새우튀김", "해물찜", "회덮밥", "알밥", "쭈꾸미볶음", "낙지덮밥", "돌솥비빔밥", "도시락", "도루묵구이", "청국장", "코다리조림", "에그마요 샌드위치", "소세지 도시락", "미트볼 스파게티", "피자토스트", "치킨너겟", "옥수수버터구이", "계란볶음밥", "스팸구이", "치즈스틱", "베이컨말이", "모짜렐라치즈핫도그", "콘치즈", "감자범벅", "크림리조또", "스위트콘전", "스마일감자", "에그스크램블", "스크램블 토스트", "햄치즈토스트", "치즈오믈렛", "카레라이스", "떡갈비", "유부초밥", "치킨마요덮밥", "베이컨김치볶음밥", "누룽지탕", "베이비파스타", "플레인우동", "미니핫도그", "수제피자", "후라이드만두", "치킨까스", "어린이돈까스", "냉모밀", "치즈볶음밥", "멜론바볶음밥", "감자치즈볼", "푸딩젤리도시락"];
 var dessertList = ["초코 케이크", "치즈 케이크", "딸기 생크림 케이크", "레드벨벳 케이크", "녹차 케이크", "당근 케이크", "밀크레이프", "크렘브륄레", "티라미수", "마카롱", "휘낭시에", "마들렌", "에클레어", "슈크림", "푸딩", "젤리", "타르트", "레몬 타르트", "애플파이", "브라우니", "머핀", "초코칩 쿠키", "오레오 쿠키", "수제쿠키", "찹쌀떡", "인절미", "약과", "호떡", "붕어빵", "계란빵", "꽈배기", "와플", "아이스크림", "바닐라 아이스크림", "초코 아이스크림", "녹차 아이스크림", "젤라또", "빙수", "팥빙수", "망고빙수", "딸기빙수", "연유토스트", "허니브레드", "크로플", "팬케이크", "롤케이크", "푸딩", "콩떡", "도넛", "카라멜 푸딩", "타피오카 버블", "탕후루", "탕후루", "탕후루"];
-let quotes = ["성공은 작은 노력을 반복한 결과이다. - 로버트 콜리어", "기회는 일어나는 것이 아니라 만들어내는 것이다. - 크리스 그로서", "성공으로 가는 길과 실패로 가는 길은 거의 똑같다. - 콜린 R. 데이비스", "남들보다 더 잘하려고 고민하지 마라. 지금의 나보다 잘하려고 애써라. - 윌리엄 포크너", "실패는 성공으로 가는 배움이다. - 필립 나이트", "작은 일에 최선을 다하면 큰 일을 할 수 있는 준비가 된다. - 데일 카네기", "인내는 쓰지만 그 열매는 달다. - 장 자크 루소", "도전하지 않으면 아무것도 얻지 못한다. - 윌리엄 셰익스피어", "위대한 일을 이루기 위해 우리는 꿈꾸는 능력이 필요하다. - 나폴레옹 힐", "절대 포기하지 말라. 당신이 되고 싶은 그 무엇이든 될 수 있다. - 애나일린 맥코드", "명언 찾을 시간에 과제나 더 해라 - 누군가", "명언 찾을 시간에 과학 과제를 더 하겠다 - 누군가", "실패는 곧 배움이다. 넘어졌다면 일어나라. - 넬슨 만델라", "노력 없이 성과는 없다. 노력은 배신하지 않는다. - 이나모리 가즈오", "기회는 준비된 자에게만 미소 짓는다. - 루이 파스퇴르", "가장 어두운 밤도 끝나고, 해는 떠오른다. - 빅토르 위고", "오늘 할 일을 내일로 미루지 마라. - 벤자민 프랭클린", "명언보다 중요한 건 네 할 일이다. - 현실", "명언을 모은다고 인생이 바뀌진 않아. - 자명한 진실", "명언 수집은 취미일 뿐, 인생을 바꾸진 않는다. - 냉정한 조언", "명언 읽을 시간에 물 한잔 마셔라. 건강이 더 중요하다. - 헬스봇", "명언 찾기 전에 일기나 써라. 자아 성찰이 더 낫다. - 어떤 철학자", "또 명언이냐… 진짜 생산적인 일 하나라도 해봐라. - 당신의 뇌", "명언 찾다가 하루 다 간다. 그냥 공부나 해라. - 선배의 조언", "명언 찾을 시간에 수학이나 더 해라 - 누군가", "명언 찾을 시간에 시험 공부를 더 하겠다 - 누군가"];
 var fortunes = [
-  "🌻 작은 호기심이 큰 발견으로 이어집니다. 평소 지나치던 사소한 것에 질문을 던져보세요.",
-  "🪁 오늘은 계획보다 ‘즉흥성’이 행운을 부릅니다. 즉석 제안을 한 번쯤 수락해 보세요.",
-  "🔋 휴대전화 배터리처럼, 당신의 에너지도 충전이 필요합니다. 짧은 낮잠이나 산책을 권해요.",
-  "🎬 오래 미뤘던 영화를 보면 뜻밖의 깨달음을 얻습니다. 엔딩 크레딧까지 놓치지 마세요.",
-  "🎨 색다른 취미가 스트레스를 지워줍니다. 크레파스든 수채화든 손을 먼저 움직여 보세요.",
-  "🛎️ 친절에 이자가 붙어 돌아오는 날입니다. 작은 도움이라도 먼저 건네보세요.",
-  "🌤️ 아침의 맑음이 오후의 흐림을 이깁니다. 중요한 일은 오전에 처리하면 순풍이 돕습니다.",
-  "🚴 느린 페달이 더 멀리 갑니다. 속도보다 지속성을 기억하면 문제 해결이 쉬워집니다.",
-  "📦 정리가 곧 정답입니다. 책상이나 가방을 정돈하다 보면 복잡한 생각도 같이 정리돼요.",
-  "🧩 퍼즐 한 조각이 맞춰지듯, 그동안 막혔던 일이 깔끔히 풀리는 순간이 옵니다.",
-  "🌕 달이 차오르듯 자신감도 서서히 상승합니다. 과정을 즐기면 결과는 따라옵니다.",
-  "💬 듣는 만큼 얻는 날입니다. 말하기보다 경청에 집중해 보세요.",
-  "🏃‍♀️ 예기치 못한 ‘모든 것이 귀찮은 타이밍’이 옵니다. 짧게라도 몸을 움직여 기분 전환!",
-  "📖 오래된 노트를 펼치면 과거의 아이디어가 오늘 필요해집니다. 기록은 배신하지 않아요.",
-  "🏝️ 머릿속이 복잡하다면 휴양지 사진이라도 한 장 보세요. 상상만으로도 마음이 느긋해집니다.",
-  "🌱 새싹을 보듯, 작게 시작한 일이 곧 큰 열매를 맺을 조짐입니다. 꾸준함을 멈추지 마세요.",
-  "🕯️ 불안은 어둠이 아닌 그림자일 뿐. 불을 켜보면 생각보다 작습니다. 두려움을 직접 살펴보세요.",
-  "📅 일정에 빈 칸을 남겨두면 좋은 소식이 끼어들 틈이 생깁니다. 하루를 꽉 채우지 마세요.",
-  "🍉 여유가 없을수록 달콤한 간식이 필요합니다. 작은 보상이 당신을 다시 달리게 합니다.",
-  "🔑 오늘은 ‘열쇠’가 당신 손에 있습니다. 문이 열릴 때까지 다른 방법을 찾지 말고 돌려보세요.",
-  "⚡ 번뜩이는 아이디어가 번개처럼 내리꽂힙니다. 기록할 도구를 항상 지니세요.",
-  "🪄 평범한 물건에 마법이 숨어 있습니다. 낡은 물건을 새 시선으로 바라보면 활용법이 떠올라요.",
-  "🤝 협업이 혼자보다 빠를 수 있는 날. 도움을 요청하거나 제안을 받아들이세요.",
-  "🫖 따뜻한 차 한 잔이 얼어붙은 대화를 녹입니다. 마실 것을 먼저 권해보세요.",
-  "🧲 끌림이 있는 사람에게 연락해 보세요. 짧은 대화가 긴 파트너십이 됩니다.",
-  "🚦 빨간불에 잠시 멈추는 시간, 번뜩이는 아이디어가 지나갑니다. 메모 준비!",
-  "📷 순간포착이 중요합니다. 카메라 앱을 자주 켜두면 추억이 배가됩니다.",
-  "🎲 모험적인 선택이 오히려 안전해집니다. 확률보단 의지를 따라가세요.",
-  "🎈 마음을 가볍게 하는 유머가 필요합니다. 스스로를 웃길 만한 영상을 찾아보세요."
+"🌞 태양이 당신을 비추는 하루입니다. 걱정했던 일들이 생각보다 순조롭게 풀릴 것입니다.",
+"🌕 달빛이 유난히 밝은 날, 오래된 인연에게서 반가운 소식이 찾아옵니다.",
+"🍀 오늘의 키워드는 ‘긍정’. 말 한마디가 큰 행운으로 되돌아옵니다.",
+"💧 눈앞의 문제는 당신의 인내심을 시험할 뿐입니다. 끝까지 버티면 길이 열립니다.",
+"🌿 사람들과의 대화 속에서 뜻밖의 아이디어를 얻게 됩니다.",
+"🌈 지갑보다 마음을 먼저 열면 뜻밖의 보상이 돌아옵니다.",
+"💎 작게 시작한 일이 큰 결실로 이어질 징조가 보입니다.",
+"🎯 목표를 구체적으로 세워보세요. 우주는 계획이 있는 사람을 돕습니다.",
+"🔥 잠시 불편하더라도 오늘의 도전은 내일의 성장을 만듭니다.",
+"🍎 잊고 있던 약속이 다시 찾아올 수 있습니다. 기억을 더듬어보세요.",
+"🌤️ 오후쯤, 당신의 노력에 대한 인정이 찾아올 수 있습니다.",
+"🪞 스스로를 돌아볼 시간입니다. 거울 속의 당신이 답을 알고 있습니다.",
+"🕊️ 마음이 가벼워질수록 운의 흐름도 부드러워집니다.",
+"💫 불확실한 상황일수록, 당신의 직감이 가장 정확합니다.",
+"⚖️ 오늘은 균형이 중요합니다. 과유불급을 명심하세요.",
+"🌻 새로운 인연이 다가오지만, 성급히 판단하지 마세요.",
+"🕯️ 평소보다 집중력이 높아집니다. 오늘은 공부나 연구에 적합한 날입니다.",
+"🎲 모험을 피하지 마세요. 확률은 당신 편입니다.",
+"🌌 어제의 고민이 오늘은 답이 되어 돌아옵니다.",
+"🍃 바람이 부는 날, 당신의 결정이 한층 가벼워집니다.",
+"🏝️ 휴식이 필요한 시점입니다. 잠깐의 쉼이 더 큰 효율을 줍니다.",
+"🌹 호감 있는 사람에게서 좋은 반응을 기대할 수 있습니다.",
+"📚 오늘 배운 작은 지식이 가까운 시일 내 큰 도움이 됩니다.",
+"🎁 생각지도 못한 선물이나 제안을 받을 수 있습니다.",
+"🧭 방향을 잃었다면 잠시 멈춰보세요. 길은 다시 보일 것입니다.",
+"⚡ 번뜩이는 아이디어가 찾아옵니다. 반드시 메모하세요.",
+"🫖 따뜻한 대화가 냉랭했던 관계를 녹입니다.",
+"📅 일정을 조금 비워두세요. 좋은 일이 들어올 자리를 만들어야 합니다.",
+"🪄 평범한 일상 속에서도 마법 같은 일이 생길 수 있습니다.",
+"🌠 잠시 멍하니 하늘을 바라보세요. 행운의 별이 지나갑니다.",
+"🎈 불안은 당신을 시험하기 위한 신호일 뿐입니다. 곧 사라질 것입니다.",
+"🧘 마음을 다스리면 몸도 따라옵니다. 오늘은 정신의 날입니다.",
+"🌙 저녁 무렵 뜻밖의 연락이 찾아옵니다. 반가운 소식이네요.",
+"📦 버려야 채워집니다. 정리한 만큼 새 운이 들어옵니다.",
+"🍇 건강한 식사가 행운의 시작입니다. 오늘은 몸을 먼저 챙기세요.",
+"🪁 계획에 없던 외출이 좋은 인연을 부를 수 있습니다.",
+"🎵 음악이 행운의 신호를 전합니다. 즐겨 듣는 노래를 틀어보세요.",
+"🧩 문제의 조각이 맞춰지는 날입니다. 끝까지 집중하세요.",
+"🔑 열쇠는 이미 당신 손에 있습니다. 자신감을 가지세요.",
+"📖 오래된 기록 속에 해답이 숨어 있습니다. 과거를 돌아보세요.",
+"🌊 감정의 파도에 휩쓸리지 마세요. 중심을 잡으면 기회가 보입니다.",
+"🏃‍♀️ 조금만 더 달려보세요. 결승선이 생각보다 가깝습니다.",
+"🌻 오늘의 행운 색상은 노란색입니다. 밝은 옷이 좋은 기운을 불러옵니다.",
+"💬 뜻밖의 칭찬이 당신을 웃게 할 것입니다.",
+"🕊️ 잃어버린 평화를 되찾게 됩니다. 주변의 소음에서 벗어나세요.",
+"🌅 이른 아침, 좋은 소식이 찾아옵니다.",
+"💡 아이디어를 행동으로 옮기면 금전운이 따릅니다.",
+"🪶 가벼운 마음이 오늘을 쉽게 만듭니다. 너무 무겁게 생각하지 마세요.",
+"🌠 별이 당신 편입니다. 오늘은 당신이 주인공입니다."
+];
+let quotes = [
+"성공은 작은 노력을 반복한 결과이다. - 로버트 콜리어",
+"실패는 성공으로 가는 배움이다. - 필립 나이트",
+"기회는 준비된 자에게만 미소 짓는다. - 루이 파스퇴르",
+"인내는 쓰지만 그 열매는 달다. - 장 자크 루소",
+"성공은 실패 후에도 계속할 용기다. - 윈스턴 처칠",
+"행복은 방향이지 목적지가 아니다. - 칼 로저스",
+"지금의 당신도 누군가의 꿈이다. - 익명",
+"할 수 있다고 믿는 순간 절반은 이룬 것이다. - 시어도어 루즈벨트",
+"모든 위대한 일은 작은 용기에서 시작된다. - 헨리 포드",
+"성공의 반대는 실패가 아니라 포기다. - 크리스 그로서",
+"SNS는 인생의 낭비다. - 알렉스 퍼거슨",
+"명언을 읽는다고 인생이 변하진 않는다. - 냉소주의자",
+"성공하고 싶다면 일단 일어나라. - 에디슨 풍자",
+"명언 찾을 시간에 공부해라. - 현실적인 조언",
+"불가능은 단지 의견일 뿐이다. - 무하마드 알리",
+"도전하지 않으면 아무것도 얻지 못한다. - 셰익스피어",
+"성공은 준비와 기회의 만남이다. - 오프라 윈프리",
+"인생은 짧다. 하지만 웃음은 길게 남는다. - 찰리 채플린",
+"오늘 걱정한다고 내일이 바뀌진 않는다. - 현실",
+"할 일은 많은데, 걱정할 시간은 없다. - 현실주의자",
+"명언보다 중요한 건 네 할 일이다. - 현실",
+"인생은 고통을 피하는 법이 아니라, 그 안에서 의미를 찾는 법이다. - 빅터 프랭클",
+"기회는 두드리지 않는다. 직접 만들어라. - 조지 버나드 쇼",
+"좋은 일은 느리게 온다. 빠른 건 대개 광고다. - 인터넷 밈",
+"명언을 모으는 대신 명언이 되어라. - 익명",
+"무엇이든 시작하는 자에게 세상은 길을 내준다. - 에머슨",
+"모두가 멈출 때 한 발 더 가라. - 나폴레옹",
+"어제보다 나은 오늘이면 충분하다. - 현실주의 명언",
+"걱정은 내일의 문제를 해결하지 못하지만, 오늘의 평화를 빼앗는다. - 리처드 칼슨",
+"스스로를 믿는 순간, 다른 사람의 시선은 사라진다. - 미상",
+"패배는 끝이 아니다. 배움의 시작이다. - 마이클 조던",
+"명언은 좋지만, 실천은 더 좋다. - 누군가의 진심",
+"성공은 노력의 습관이다. - 아리스토텔레스",
+"당신의 속도는 중요하지 않다. 멈추지만 마라. - 공자식 현실 버전",
+"실패를 두려워하면 성공도 두려워진다. - 익명",
+"명언 찾다가 하루 간다. 그냥 해라. - 선배의 조언",
+"성공은 열심히 하는 사람의 것이 아니라, 포기하지 않는 사람의 것이다. - 루이스 캐럴",
+"인생의 가장 큰 위험은 위험을 감수하지 않는 것이다. - 마크 주커버그",
+"계획이 없다면, 남의 계획 속에서 살게 될 것이다. - 짐 론",
+"지금 하는 일에 집중하라. 그것이 미래를 만든다. - 달라이 라마",
+"성공은 평범함을 반복하는 비범한 능력이다. - 조지프 루",
+"명언보다 물 한 잔이 더 낫다. - 헬스봇",
+"완벽을 찾기보다 꾸준함을 찾아라. - 익명",
+"모든 날이 좋을 수는 없지만, 모든 날엔 좋은 일이 있다. - 위로의 명언",
+"시간이 없다는 건 핑계다. 의지가 없다는 뜻이다. - 냉철한 현실",
+"명언을 외우지 말고, 자신만의 명언을 써라. - 작가의 조언",
+"세상은 노력하는 자를 시험하지만, 결국 돕는다. - 현실 철학",
+"행복은 결과가 아니라 선택이다. - 미상",
+"오늘도 포기하지 마라. 내일의 당신이 고마워할 것이다. - 동기부여봇",
+"훼손될 명예밖에 없다면, 애초에 명예는 없던 것이다. - 냉철한 진실",
+"남 탓하기 전에 거울을 봐라. 그 안에 원인이 있다. - 현실",
+"운이 나쁜 게 아니라, 준비가 없던 것이다. - 냉정한 사실",
+"노력은 배신하지 않는다. 하지만 대부분은 포기한다. - 현실주의자",
+"사람은 변하지 않는다. 단지 들키지 않을 뿐이다. - 인간관찰자",
+"세상은 공평하다. 노력 안 한 만큼만 불행해진다. - 냉정한 통계",
+"자존심은 굶주린 배를 채워주지 않는다. - 현실",
+"세상이 널 싫어하는 게 아니다. 그냥 관심이 없다. - 냉소적 위로",
+"비판을 두려워하지 마라. 아무도 널 그만큼 신경 쓰지 않는다. - 현실 조언",
+"실패를 두려워할 시간에 이미 누군가는 성공했다. - 시간관리자",
+"넌 준비가 안 됐을 뿐, 운이 없는 게 아니다. - 현실적인 말",
+"결단이 없으면, 변명만 남는다. - 냉정한 리더",
+"명예를 지키려다 인생을 잃는다면, 그 명예는 이미 죽었다. - 잔혹한 진실",
+"불평은 세금을 내지 않는다. 대신 시간과 기회를 잃는다. - 현실주의자",
+"세상은 널 시험하지 않는다. 그냥 무관심할 뿐이다. - 현실 통찰",
+"노력 없는 자는 운을 탓하고, 운 좋은 자는 더 노력한다. - 냉정한 교훈",
+"위로는 일시적이지만, 게으름은 평생이다. - 현실",
+"성공은 운이 아니라 습관이다. 네 습관을 봐라. - 냉철한 관찰자",
+"불행한 이유를 찾지 말고, 행동하지 않는 이유를 찾아라. - 진실의 말",
+"자기연민은 가장 달콤한 독이다. - 냉정한 심리학자",
+"‘나중에’라는 말은 ‘안 하겠다’의 예의 있는 표현이다. - 팩트폭격기",
+"인생은 불공평하다. 하지만 대부분은 그걸 핑계로 삼는다. - 냉철한 진실",
+"네 한숨이 세상을 바꾸지 않는다. 행동만이 바꾼다. - 현실파",
+"세상은 네가 힘든 걸 몰라준다. 왜냐면 모두 힘드니까. - 잔혹한 사실",
+"진짜 문제는 환경이 아니라 태도다. - 냉철한 현실주의자",
+"노력한다고 다 성공하지는 않는다. 하지만 노력 안 하면 100% 실패한다. - 수학적 진리",
+"자존감은 행동으로 채워야 한다. 말로는 못 만든다. - 실용주의자",
+"운이 나쁘다 말하지 마라. 준비되지 않은 자에게 행운은 재앙이다. - 현실의 경고",
+"네가 하는 변명 중 절반은 네 자신도 믿지 않는다. - 직설적 진실",
+"겸손은 좋지만, 자신감 없는 겸손은 변명일 뿐이다. - 현실주의자",
+"결국 아무도 네 인생을 대신 살아주지 않는다. - 궁극의 팩트",
+"모두가 널 응원하는 건, 아직 널 위협으로 느끼지 않기 때문이다. - 냉소적 현실",
+"자기계발서는 읽는다고 변하지 않는다. 실행해야 변한다. - 냉정한 충고",
+"성공한 사람은 기회를 기다리지 않는다. 만들어낸다. - 현실적 리더",
+"운보다 무서운 건 꾸준함이다. - 냉철한 사실",
+"눈치를 본다고 인생이 쉬워지진 않는다. - 현실통찰",
+"세상은 널 오해하지 않는다. 넌 그냥 설명이 부족한 거다. - 냉정한 시선",
+"실패가 두렵다는 건, 사실 아직 진심이 아니라는 뜻이다. - 잔혹한 명언",
+"나중이란 단어를 쓰는 순간, 지금은 사라진다. - 현실 시계",
+"게으름은 재능의 가장 효율적인 파괴자다. - 팩트 공격",
+"자신을 속이는 순간, 세상은 널 알아본다. - 냉소적 경고",
+"운명은 기다리는 게 아니라, 선택하는 것이다. - 현실철학",
+"명예는 행동이 만든다. 말로 쌓인 명예는 입김 하나에 무너진다. - 냉철한 명언",
+"불행한 사람의 공통점: 이유는 많고, 행동은 없다. - 현실 분석",
+"네가 진짜로 원한다면, 이미 움직였을 것이다. - 직설의 미학",
+"성공한 척하는 데 쓴 에너지를 진짜 행동에 써라. - 팩트폭격",
+"운명 탓은 게으름의 시적 표현이다. - 냉소적 진실",
+"누구도 널 구하러 오지 않는다. 이건 영화가 아니다. - 현실 종결자",
+"현실을 인정하는 순간, 인생이 시작된다. - 냉철한 결론"
 ];
 var helloEmojis = ["😊", "😄", "🙌", "👋", "✨", "😎", "🤗"];
 var shameEmojis = ["😒", "🙄", "😑", "🤦", "🤷", "👎", "🥱", "😱", "🫥", "😭"];
@@ -62,441 +178,504 @@ var memberPoints = {};  // { [name]: points }
 var lastDate = "";
 var fortuneList = {};
 
-/***** 유틸 *****/
+// 실행 단말의 "로컬" 시간을 그대로 반환
+function nowLocal() {
+  return new Date();
+}
+
+// KST String 이지만, 사실 휴대폰 로컬시간만 인식하기 때문에, 별 의미는 없음
 function toKSTString(d) {
+  function pad2(n){ return (n < 10 ? '0' : '') + n; }
   try {
-    var tzDate = new Date(d.getTime() + (9 * 60 - d.getTimezoneOffset()) * 60000);
-    var yyyy = tzDate.getUTCFullYear();
-    var mm = String(tzDate.getUTCMonth() + 1).padStart(2, '0');
-    var dd = String(tzDate.getUTCDate()).padStart(2, '0');
-    var HH = String(tzDate.getUTCHours()).padStart(2, '0');
-    var MM = String(tzDate.getUTCMinutes()).padStart(2, '0');
-    var SS = String(tzDate.getUTCSeconds()).padStart(2, '0');
+    var yyyy = d.getFullYear();
+    var mm   = pad2(d.getMonth() + 1);
+    var dd   = pad2(d.getDate());
+    var HH   = pad2(d.getHours());
+    var MM   = pad2(d.getMinutes());
+    var SS   = pad2(d.getSeconds());
     return yyyy + "-" + mm + "-" + dd + " " + HH + ":" + MM + ":" + SS;
-  } catch (e) {
-    return new Date().toLocaleString();
+  } catch(e) {
+    var n = new Date();
+    return n.getFullYear() + "-" + pad2(n.getMonth()+1) + "-" + pad2(n.getDate()) +
+           " " + pad2(n.getHours()) + ":" + pad2(n.getMinutes()) + ":" + pad2(n.getSeconds()) + " KST";
   }
 }
-function getTodayKey() { return new Date().toLocaleDateString(); }
+
+// "yyyy.m.d" — 로컬(휴대폰) 날짜 기준
+function getTodayKeyLocal() {
+  var k = nowLocal();
+  return k.getFullYear() + "." + (k.getMonth() + 1) + "." + k.getDate();
+}
+
+// 기존 호출부랑 호환
+function getTodayKey(){ return getTodayKeyLocal(); }
+
+
+// 고정 이모지/닉 매핑
 function getUnifiedSenderName(sender) {
-  for (var emoji in identifierEmojiMap) {
-    if (sender.indexOf(emoji) !== -1) return identifierEmojiMap[emoji];
-  }
-  return sender;
+    for (var emoji in identifierEmojiMap) {
+        if (sender.indexOf(emoji) !== -1) return identifierEmojiMap[emoji];
+    }
+    return sender;
 }
+
 function ensureChatRecord(name) {
-  if (!chatCount[name]) { chatCount[name] = { count: 0, lastChatAt: null }; return; }
-  if (typeof chatCount[name] === "number") chatCount[name] = { count: chatCount[name], lastChatAt: null };
-  if (typeof chatCount[name].count !== "number") chatCount[name].count = 0;
-  if (typeof chatCount[name].lastChatAt !== "string" && chatCount[name].lastChatAt !== null) chatCount[name].lastChatAt = null;
+    if (!chatCount[name]) { chatCount[name] = { count: 0, lastChatAt: null }; return; }
+    if (typeof chatCount[name] === "number") chatCount[name] = { count: chatCount[name], lastChatAt: null };
+    if (typeof chatCount[name].count !== "number") chatCount[name].count = 0;
+    if (typeof chatCount[name].lastChatAt !== "string" && chatCount[name].lastChatAt !== null) chatCount[name].lastChatAt = null;
 }
+
 function addChatCountAndStamp(name) {
-  ensureChatRecord(name);
-  chatCount[name].count += 1;
-  chatCount[name].lastChatAt = toKSTString(new Date());
+    ensureChatRecord(name);
+    chatCount[name].count += 1;
+    chatCount[name].lastChatAt = toKSTString(new Date());
 }
+
 function addPoints(name, base) {
-  if (name === "권재현") return; // 제외
-  if (!memberPoints[name]) memberPoints[name] = 0;
-  var delta = base;
-  if (isDoubleUpTime()) delta *= 2; // 점수 더블업
-  memberPoints[name] += delta;
+    if (name === "권재현") return; // 제외
+    if (!memberPoints[name]) memberPoints[name] = 0;
+    var delta = base;
+    if (isDoubleUpTime()) delta *= 2; // 점수 더블업
+    memberPoints[name] += delta;
 }
+
 function safeReply(replier, text) { try { replier.reply(text); } catch (e) { } }
 
 /***** 데이터 로드/저장 *****/
 function loadData() {
-  try { attendanceList = JSON.parse(DataBase.getDataBase(ATTENDANCE_FILE) || "{}"); } catch (e) { attendanceList = {}; }
-  try { attendanceStats = JSON.parse(DataBase.getDataBase(ATTENDANCE_STAT_FILE) || "{}"); } catch (e) { attendanceStats = {}; }
-  try {
-    var raw = DataBase.getDataBase(CHAT_FILE) || "{}";
-    chatCount = JSON.parse(raw);
-    for (var k in chatCount) ensureChatRecord(k);
-  } catch (e) { chatCount = {}; }
-  try { fortuneList = JSON.parse(DataBase.getDataBase(FORTUNE_FILE) || "{}"); } catch (e) { fortuneList = {}; }
-  try { memberPoints = JSON.parse(DataBase.getDataBase(POINT_FILE) || "{}"); } catch (e) { memberPoints = {}; }
-  try { lastDate = DataBase.getDataBase(DATE_FILE) || getTodayKey(); } catch (e) { lastDate = getTodayKey(); }
-}
-function saveData() {
-  try {
-    DataBase.setDataBase(ATTENDANCE_FILE, JSON.stringify(attendanceList));
-    DataBase.setDataBase(ATTENDANCE_STAT_FILE, JSON.stringify(attendanceStats));
-    DataBase.setDataBase(CHAT_FILE, JSON.stringify(chatCount));
-    DataBase.setDataBase(FORTUNE_FILE, JSON.stringify(fortuneList));
-    DataBase.setDataBase(POINT_FILE, JSON.stringify(memberPoints));
-    DataBase.setDataBase(DATE_FILE, lastDate);
-  } catch (e) { Log.error("❌ 저장 오류: " + e); }
-}
-function resetAttendanceIfNewDay() {
-  var today = getTodayKey();
-  if (today != lastDate) {
-    attendanceList = {};
-    fortuneList = {};
-    lastDate = today;
-    saveData();
-  }
+    try { attendanceList = JSON.parse(DataBase.getDataBase(ATTENDANCE_FILE) || "{}"); } catch (e) { attendanceList = {}; }
+    try { attendanceStats = JSON.parse(DataBase.getDataBase(ATTENDANCE_STAT_FILE) || "{}"); } catch (e) { attendanceStats = {}; }
+    try {
+        var raw = DataBase.getDataBase(CHAT_FILE) || "{}";
+        chatCount = JSON.parse(raw);
+        for (var k in chatCount) ensureChatRecord(k);
+    } catch (e) { chatCount = {}; }
+    try { fortuneList = JSON.parse(DataBase.getDataBase(FORTUNE_FILE) || "{}"); } catch (e) { fortuneList = {}; }
+    try { memberPoints = JSON.parse(DataBase.getDataBase(POINT_FILE) || "{}"); } catch (e) { memberPoints = {}; }
+    try { lastDate = DataBase.getDataBase(DATE_FILE) || getTodayKey(); } catch (e) { lastDate = getTodayKey(); }
 }
 
-/***** 시간 규칙 *****/
+function saveData() {
+    try {
+        DataBase.setDataBase(ATTENDANCE_FILE, JSON.stringify(attendanceList));
+        DataBase.setDataBase(ATTENDANCE_STAT_FILE, JSON.stringify(attendanceStats));
+        DataBase.setDataBase(CHAT_FILE, JSON.stringify(chatCount));
+        DataBase.setDataBase(FORTUNE_FILE, JSON.stringify(fortuneList));
+        DataBase.setDataBase(POINT_FILE, JSON.stringify(memberPoints));
+        DataBase.setDataBase(DATE_FILE, lastDate);
+    } catch (e) { Log.error("❌ 저장 오류: " + e); }
+}
+
+function resetAttendanceIfNewDay() {
+    var today = getTodayKey();
+    if (today != lastDate) {
+        attendanceList = {};
+        fortuneList = {};
+        lastDate = today;
+        saveData();
+    }
+}
+
 // 출석: 평일 07:00~12:00, 주말 06:00~13:00
 function isAttendanceTime() {
-  var now = new Date();
-  var day = now.getDay(); // 0=일,6=토
+  var now = nowLocal();
+  var day = now.getDay(); // 0=일, 6=토
   var isWeekend = (day === 0 || day === 6);
   var minutes = now.getHours() * 60 + now.getMinutes();
-  var start = isWeekend ? 360 : 420;
-  var end = isWeekend ? 780 : 720;
+  var start = isWeekend ? 360 : 420; // 06:00 or 07:00
+  var end   = isWeekend ? 780 : 720; // 13:00 or 12:00
   return minutes >= start && minutes <= end;
 }
-// 점수 더블업 시간(채팅/출석 점수 공통 적용)
+
+// 점수 더블업
 function isDoubleUpTime() {
-  var now = new Date();
+  var now = nowLocal();
   var day = now.getDay();
   var isWeekend = (day === 0 || day === 6);
   var minutes = now.getHours() * 60 + now.getMinutes();
   var ranges = isWeekend ? [[30, 360], [780, 900]] : [[30, 419], [720, 900]];
   for (var i = 0; i < ranges.length; i++) {
-    var start = ranges[i][0], end = ranges[i][1];
-    if (minutes >= start && minutes < end) return true;
+    var s = ranges[i][0], e = ranges[i][1];
+    if (minutes >= s && minutes < e) return true;
   }
   return false;
 }
 
+
 /***** 출석 처리 *****/
 function hasAttendedToday(name) {
-  var today = getTodayKey();
-  if (!attendanceList[today]) return false;
-  return attendanceList[today].some(function (e) {
-    return getUnifiedSenderName(e.sender) === name;
-  });
-}
-function pushAttendance(name, sender) {
-  var today = getTodayKey();
-  if (!attendanceList[today]) attendanceList[today] = [];
-  attendanceList[today].push({ sender: sender, time: new Date() });
-  var rank = attendanceList[today].length;
-  if (!attendanceStats[name]) attendanceStats[name] = { total: 1, ranks: [rank] };
-  else { attendanceStats[name].total++; attendanceStats[name].ranks.push(rank); }
-  addPoints(name, 10); // 출석 10p (+더블업)
-  return rank;
-}
-
-/***** 메인 응답 *****/
-function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
-  loadData();
-  resetAttendanceIfNewDay();
-
-  var unifiedName = getUnifiedSenderName(sender);
-
-  // 채팅 기록/마지막 채팅시간/KST 저장 + 점수 1p (+더블업)
-  if (unifiedName !== "권재현") {
-    addChatCountAndStamp(unifiedName);
-    addPoints(unifiedName, 1);
-    saveData();
-  }
-
-  // 자동 출석 (출석시간 & 미출석 시 1회만 안내)
-  if (isAttendanceTime() && unifiedName !== "권재현") {
-    if (!hasAttendedToday(unifiedName)) {
-      var rank = pushAttendance(unifiedName, sender);
-      saveData();
-      var medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "";
-      safeReply(replier, unifiedName + " 님, " + rank + "등으로 출석 완료했어요! " + medal + " 🎉");
-    }
-  }
-
-  // ===== 기본 멘트들 (생략 가능) =====
-  if (msg.startsWith("🎉 환영합니다! 🎉")) { safeReply(replier, "안녕하세요! 하트인증 & 한글 닉변 부탁해요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
-  if (msg.startsWith("보이스룸이 방금")) { safeReply(replier, "보이스룸이 시작되었어요! 어떤 이야기들이 오갈까요?!"); return; }
-  if (msg.startsWith("보이스룸 종료")) { safeReply(replier, "보이스룸이 종료되었습니다. 모두 수고하셨습니다!"); return; }
-  if (msg.startsWith("안녕하세요")) { safeReply(replier, "반가워요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
-  if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") { safeReply(replier, "이 방은 존댓말 필수입니다. 공지 확인해주세요."); return; }
-  if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") { safeReply(replier, "(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)"); return; }
-  if (msg == "출석") { safeReply(replier, "\"!출석\" 을 입력해야 출석 완료!"); return; }
-  if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") { safeReply(replier, "이 메시지가 전송된다면 살아있다는 것 입니다."); return; }
-
-  // ===== 관리자 명령 =====
-  if (sender == "권재현") {
-    if (msg == "!출석초기화") { attendanceList = {}; attendanceStats = {}; saveData(); safeReply(replier, "✅ 출석 데이터를 초기화했어요."); return; }
-    if (msg == "!채팅초기화") { chatCount = {}; saveData(); safeReply(replier, "✅ 채팅 수 데이터를 초기화했어요."); return; }
-    if (msg == "!운세초기화") { fortuneList = {}; saveData(); safeReply(replier, "✅ 운세 데이터를 초기화했어요."); return; }
-    if (msg == "!전체초기화") {
-      attendanceList = {}; attendanceStats = {}; chatCount = {}; memberPoints = {}; fortuneList = {}; lastDate = getTodayKey();
-      saveData(); safeReply(replier, "✅ 전체 데이터를 초기화했어요."); return;
-    }
-  }
-
-  // ===== 출석 명령 =====
-  if (msg == "!출석") {
-    if (!isAttendanceTime()) {
-      safeReply(replier, "⏰ 출석 가능 시간이 아닙니다.\n\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
-      return;
-    }
-    if (!hasAttendedToday(unifiedName)) {
-      if (unifiedName !== "권재현") {
-        var r = pushAttendance(unifiedName, sender);
-        saveData();
-        var medal2 = r == 1 ? "🥇" : r == 2 ? "🥈" : r == 3 ? "🥉" : "";
-        safeReply(replier, unifiedName + " 님, " + r + "등으로 출석 완료했어요! " + medal2 + " 🎉");
-      } else {
-        safeReply(replier, "관리자는 출석 집계에서 제외됩니다.");
-      }
-    } else {
-      safeReply(replier, unifiedName + " 님은 이미 출석하셨어요. 😊"); // 이미 출석: !출석 입력 시에만 안내
-    }
-    return;
-  }
-
-  // ===== 출석 통계/랭킹 (유지) =====
-  if (msg == "!출석랭킹") {
-    var todayKey = getTodayKey();
-    if (attendanceList[todayKey] && attendanceList[todayKey].length > 0) {
-      var list = "";
-      for (var i = 0; i < attendanceList[todayKey].length; i++) {
-        var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-        var shown = getUnifiedSenderName(attendanceList[todayKey][i].sender);
-        list += (i + 1) + "등: " + shown + " " + medal + "\n";
-      }
-      list += "랭킹에 계신 분들 모두 축하합니다!";
-      safeReply(replier, "📋 오늘의 아침출석 랭킹\n" + list);
-    } else {
-      safeReply(replier, "오늘은 아무도 출석하지 않았어요. 😢\n다들 자고있나...?");
-    }
-    return;
-  }
-  if (msg == "!출석통계") {
-    var keys = Object.keys(attendanceStats);
-    if (keys.length === 0) safeReply(replier, "아직 출석한 사용자가 없습니다. 😢");
-    else {
-      var list = "📊 전체 출석 통계\n";
-      keys.sort(function (a, b) {
-        var t1 = (attendanceStats[a] && attendanceStats[a].total) || 0;
-        var t2 = (attendanceStats[b] && attendanceStats[b].total) || 0;
-        if (t1 !== t2) return t2 - t1;
-        var r1 = (attendanceStats[a] && attendanceStats[a].ranks) || [];
-        var r2 = (attendanceStats[b] && attendanceStats[b].ranks) || [];
-        var avg1 = r1.length ? r1.reduce(function (x, y) { return x + y; }) / r1.length : Infinity;
-        var avg2 = r2.length ? r2.reduce(function (x, y) { return x + y; }) / r2.length : Infinity;
-        return avg1 - avg2;
-      });
-      for (var i = 0; i < keys.length; i++) {
-        var uname = keys[i];
-        var stats = attendanceStats[uname];
-        var avg = stats.ranks.length ? (stats.ranks.reduce(function (a, b) { return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
-        list += "- " + uname + ": " + stats.total + "일 출석 | 평균 등수 " + avg + "\n";
-      }
-      list += "상위권에 계신 분들 모두 축하합니다!";
-      safeReply(replier, list);
-    }
-    return;
-  }
-
-  // ===== 새 명령어: !나 (내 정보 + 평균등수) =====
-  if (msg === "!나") {
-    ensureChatRecord(unifiedName);
-    var myCount = chatCount[unifiedName].count || 0;
-    var myLast = chatCount[unifiedName].lastChatAt ? chatCount[unifiedName].lastChatAt : "기록 없음";
-    var myAttend = (attendanceStats[unifiedName] && attendanceStats[unifiedName].total) ? attendanceStats[unifiedName].total : 0;
-    var myPoint = memberPoints[unifiedName] || 0;
-
-    // 평균 등수 계산 (출석통계의 ranks 배열 기반)
-    var avgRank = "N/A";
-    if (attendanceStats[unifiedName] && Array.isArray(attendanceStats[unifiedName].ranks) && attendanceStats[unifiedName].ranks.length > 0) {
-      var rks = attendanceStats[unifiedName].ranks;
-      var sum = 0;
-      for (var i = 0; i < rks.length; i++) sum += (typeof rks[i] === "number" ? rks[i] : 0);
-      avgRank = (sum / rks.length).toFixed(2) + "등";
-    }
-
-    // 헤더: "나의 정보(토리)" 형태 (고정닉 표시)
-    var headerName = unifiedName;
-    var header = "나의 정보(" + headerName + ")";
-
-    var text = header + "\n"
-      + "점수 " + myPoint + "점 | 채팅수 " + myCount + "개\n"
-      + "출석 " + myAttend + "일 | 평균 " + avgRank + "\n"
-      + "마지막 채팅일시 " + myLast;
-
-    safeReply(replier, text);
-    return;
-  }
-
-
-  // ===== 새 명령어: !남 (닉) (상대 정보 + 평균등수) =====
-  if (msg.startsWith("!남 ")) {
-    var raw = msg.substring("!남".length).trim();
-    var targetName = getUnifiedSenderName(raw);
-    if (!targetName) { safeReply(replier, "대상 닉네임을 입력해주세요. 예) !남 환생"); return; }
-
-    var hasAny =
-      (chatCount[targetName] != null) ||
-      (memberPoints[targetName] != null) ||
-      (attendanceStats[targetName] != null);
-
-    if (!hasAny) {
-      safeReply(replier, targetName + " 님의 기록이 없어요.");
-      return;
-    }
-
-    ensureChatRecord(targetName);
-    var tCount = (chatCount[targetName] && chatCount[targetName].count) ? chatCount[targetName].count : 0;
-    var tLast = (chatCount[targetName] && chatCount[targetName].lastChatAt) ? chatCount[targetName].lastChatAt : "기록 없음";
-    var tAttend = (attendanceStats[targetName] && attendanceStats[targetName].total) ? attendanceStats[targetName].total : 0;
-    var tPoint = memberPoints[targetName] || 0;
-
-    // 평균 등수 계산
-    var tAvg = "N/A";
-    if (attendanceStats[targetName] && Array.isArray(attendanceStats[targetName].ranks) && attendanceStats[targetName].ranks.length > 0) {
-      var trks = attendanceStats[targetName].ranks;
-      var tsum = 0;
-      for (var i = 0; i < trks.length; i++) tsum += (typeof trks[i] === "number" ? trks[i] : 0);
-      tAvg = (tsum / trks.length).toFixed(2) + "등";
-    }
-
-    // 헤더: "환생 님의 정보"
-    var header2 = targetName + " 님의 정보";
-
-    var text2 = header2 + "\n"
-      + "점수 " + tPoint + "점 | 채팅수 " + tCount + "개\n"
-      + "출석 " + tAttend + "일 | 평균 " + tAvg + "\n"
-      + "마지막 채팅일시 " + tLast;
-
-    safeReply(replier, text2);
-    return;
-  }
-
-
-
-  // ===== 통합 통계: !멤버통계 (점수 내림차순, 동점 시 채팅수 내림차순, 공란 없이) =====
-  if (msg == "!멤버통계") {
-    var memberSet = {};
-    for (var u in memberPoints) memberSet[u] = true;
-    for (var u2 in chatCount) memberSet[u2] = true;
-    for (var u3 in attendanceStats) memberSet[u3] = true;
-
-    var rows = [];
-    for (var name in memberSet) {
-      if (name === "권재현") continue; // 필요 시 제거
-      ensureChatRecord(name);
-      var p = memberPoints[name] || 0;
-      var c = (chatCount[name] && chatCount[name].count) ? chatCount[name].count : 0;
-      var a = (attendanceStats[name] && attendanceStats[name].total) ? attendanceStats[name].total : 0;
-      var last = (chatCount[name] && chatCount[name].lastChatAt) ? chatCount[name].lastChatAt : "기록 없음";
-      rows.push({ name: name, point: p, chat: c, attend: a, last: last });
-    }
-
-    if (rows.length === 0) {
-      safeReply(replier, "아직 멤버 통계를 표시할 데이터가 없어요. 😢");
-      return;
-    }
-
-    // 🔥 정렬: 점수 desc, 채팅수 desc
-    rows.sort(function (x, y) {
-      if (y.point !== x.point) return y.point - x.point;
-      return y.chat - x.chat;
+    var today = getTodayKey();
+    if (!attendanceList[today]) return false;
+    return attendanceList[today].some(function (e) {
+        // 저장도, 비교도 모두 '고정닉' 기준
+        return getUnifiedSenderName(e.sender) === name;
     });
+}
 
-    // 🔥 출력: 공백 라인 없이
-    var out = "📈 멤버 통계 (점수 → 채팅수)\n";
-    for (var i = 0; i < rows.length; i++) {
-      var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
-      out += rows[i].name + (medal ? " " + medal : "") + " : "
-        + "점수 " + rows[i].point + "점 | 채팅수 " + rows[i].chat + "개 | " + rows[i].attend + "일 출석\n"
-        + "마지막 채팅일시 " + rows[i].last + (i < rows.length - 1 ? "\n" : "");
+/**
+ * 등수 → 기본 포인트 계산 (최소 10점)
+ * 1등 20, 2등 19, 3등 18, 4등 17, 5등 16, 6등~ 10
+ */
+function calcRankBasePoint(rank) {
+    if (rank >= 1 && rank <= 5) return 21 - rank; // 1→20, 2→19, ... 5→16
+    return 10;
+}
+
+/**
+ * 등수 기반 포인트 적립 (더블업 없음, 무조건 등수 차등만)
+ * 기존 addPoints는 더블업 가능성이 있어 별도 함수로 직접 반영
+ */
+function addRankPoints(name, rank) {
+    if (name === "권재현") return; // 제외 정책 유지
+    if (!memberPoints[name]) memberPoints[name] = 0;
+    var base = calcRankBasePoint(rank);
+    memberPoints[name] += base;
+    return base; // 실제 적립된 점수 반환
+}
+
+function pushAttendance(unifiedName, senderRaw) {
+    var today = getTodayKey();
+    if (!attendanceList[today]) attendanceList[today] = [];
+
+    // ✅ 저장 시에도 '고정닉'으로 저장
+    var nowStr = toKSTString(new Date());
+    attendanceList[today].push({ sender: unifiedName, time: nowStr });
+
+    var rank = attendanceList[today].length;
+
+    // 누적 통계도 '고정닉'으로 집계
+    if (!attendanceStats[unifiedName]) {
+        attendanceStats[unifiedName] = { total: 1, ranks: [rank] };
+    } else {
+        attendanceStats[unifiedName].total++;
+        attendanceStats[unifiedName].ranks.push(rank);
     }
-    safeReply(replier, out);
-    return;
-  }
 
+    var earnedPoint = addRankPoints(unifiedName, rank);
 
-  // ===== 기타 기존 기능 유지 =====
-  if (msg == "!명언") { safeReply(replier, quotes[Math.floor(Math.random() * quotes.length)]); return; }
-  if (msg == "!밥" || msg == "밥" || msg == "점메추" || msg == "저메추" || msg == "메뉴추천") {
-    var food = foodList[Math.floor(Math.random() * foodList.length)];
-    safeReply(replier, unifiedName + " 님,\n오늘은 '" + food + "' 어떠세요? 🍽️"); return;
-  }
-  if (msg == "!디저트" || msg == "디저트" || msg == "후식" || msg == "후식추천") {
-    var dessert = dessertList[Math.floor(Math.random() * dessertList.length)];
-    safeReply(replier, unifiedName + " 님,\n디저트는 '" + dessert + "' 추천드려요! 🍰"); return;
-  }
-  if (msg == "!운세") {
-    var tday = getTodayKey();
-    if (typeof fortuneList != "object") fortuneList = {};
-    if (!fortuneList[tday]) fortuneList[tday] = {};
-    if (!fortuneList[tday][unifiedName]) {
-      var random = Math.floor(Math.random() * fortunes.length);
-      fortuneList[tday][unifiedName] = fortunes[random];
-      saveData();
+    return { rank: rank, earned: earnedPoint, time: nowStr };
+}
+
+/***** 메인 응답 (중복응답 패치 적용) *****/
+function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
+    loadData();
+    resetAttendanceIfNewDay();
+
+    var unifiedName = getUnifiedSenderName(sender);
+
+    if (unifiedName !== "권재현") {
+        addChatCountAndStamp(unifiedName);
+        addPoints(unifiedName, 1);
+        saveData();
     }
-    var nums = [];
-    while (nums.length < 6) {
-      var rnum = Math.floor(Math.random() * 45) + 1;
-      if (nums.indexOf(rnum) == -1) nums.push(rnum);
+
+    // 2) === 명령어 처리 먼저 (중복응답 방지) ===
+    if (msg == "!출석") {
+        if (!isAttendanceTime()) {
+            safeReply(replier, "⏰ 출석 가능 시간이 아닙니다.\n\n[출석 가능 시간]\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
+            return;
+        }
+        if (unifiedName === "권재현") {
+            safeReply(replier, "관리자는 출석 집계에서 제외됩니다.");
+            return;
+        }
+        if (!hasAttendedToday(unifiedName)) {
+            var res = pushAttendance(unifiedName, sender); // { rank, earned, time }
+            saveData();
+            var medal2 = res.rank == 1 ? "🥇" : res.rank == 2 ? "🥈" : res.rank == 3 ? "🥉" : "";
+            // 적립 포인트 명시
+            safeReply(
+                replier,
+                unifiedName + " 님, " + res.rank + "등으로 출석 완료했어요! " + medal2 + " 🎉\n"
+                + "이번 출석으로 " + res.earned + "점 적립했어요.\n\n"
+                + "⚠️경고⚠️\n"
+                + "오늘 " + unifiedName + " 님은 강제출석명령을 사용하셔서 출석하셨습니다.\n"
+                + "자동 출석을 우선으로 사용하여야 하며\n자동 출석이 되지 않아 강제출석이 불가피하였을 경우 반드시 방장에게 말씀해주셔야 합니다.");
+        } else {
+            safeReply(replier, unifiedName + " 님은 이미 출석하셨어요. 😊\n\n[출석 가능 시간]\n(월~금) 07:00~12:00\n(토~일) 06:00~13:00");
+        }
+        return;
     }
-    nums.sort(function (a, b) { return a - b; });
-    safeReply(replier, unifiedName + " 님의 오늘의 운세입니다. 🔮\n\n"
-      + fortuneList[tday][unifiedName]
-      + "\n\n🎲로또 추천 번호: " + nums.join(", ")
-      + "\n주의사항: 해당 기능은 당첨여부를 보장하지 않습니다.");
-    return;
-  }
 
-  if (msg == "사용법" || msg == "봇" || msg == "도움말" || msg == "!") {
-    safeReply(replier,
-      "📌 채팅봇 기능안내\n"
-      + "1. !출석 – 아침 출석 (자동 출석 지원) 🎉\n"
-      + "2. !출석랭킹 – 오늘 출석 목록 📋 / !출석통계 – 누적 출석 통계 📊\n"
-      + "3. !나 – 내 정보 확인하기🧑‍💻\n"
-      + "4. !남 (닉) – 남의 정보 확인하기👤\n"
-      + "5. !멤버통계 – 멤버 종합 통계(점수 순) 📈\n"
-      + "6. !밥 / !디저트 / !명언 / !운세: 각종 추천 기능 제공\n"
-      + "문제 발생 시 토리님에게 문의 부탁드립니다. (Version 2.0)");
-    return;
-  }
+    // 3) === 자동 출석은 명령어 처리 후에만 ===
+    if (isAttendanceTime() && unifiedName !== "권재현") {
+        if (!hasAttendedToday(unifiedName)) {
+            var res2 = pushAttendance(unifiedName, sender); // { rank, earned, time }
+            saveData();
+            var medal = res2.rank == 1 ? "🥇" : res2.rank == 2 ? "🥈" : res2.rank == 3 ? "🥉" : "";
+            safeReply(
+                replier,
+                unifiedName + " 님, " + res2.rank + "등으로 출석 완료했어요! " + medal + " 🎉\n"
+                + "이번 출석으로 " + res2.earned + "점 적립했어요."
+            );
+        }
+    }
 
-  if (msg == "!주의사항") {
-    safeReply(replier, "⚠️주의사항⚠️\n"
-      + "1. 채팅봇은 원활한 구동을 보장하지 않습니다. 간혹 1초이내 다량 채팅 시 일부만 응답될 수 있습니다.\n"
-      + "2. 고정 이모지/닉네임 기반으로 동작하니, 닉변이 잦다면 고정 설정을 요청해주세요.\n"
-      + "3. 채팅/출석 등 기록형 기능은 관련 법률에 따라 주기적으로 초기화되며, 최대 1년 보존 후 삭제될 수 있습니다.\n"
-      + "4. 주기적 점검으로 잠시 기능이 중단될 수 있습니다.\n"
-      + "5. 로또 번호는 당첨을 보장하지 않습니다.\n"
-      + "6. 사진/이모티콘은 인식하지 않을 수 있습니다.\n"
-      + "7. 해당 봇은 AI가 아닙니다. 정확한 답변을 요구하지 마십시오.");
-    return;
-  }
+    // ===== 기본 멘트들 (생략 가능) =====
+    if (msg.startsWith("🎉 환영합니다! 🎉")) { safeReply(replier, "안녕하세요! 하트인증 & 부르기 쉬운 한글 닉네임으로 변경 부탁해요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
+    if (msg.startsWith("보이스룸이 방금")) { safeReply(replier, "보이스룸이 시작되었어요! 어떤 이야기들이 오갈까요?!"); return; }
+    if (msg.startsWith("보이스룸 종료")) { safeReply(replier, "보이스룸이 종료되었습니다. 모두 수고하셨습니다!"); return; }
+    if (msg.startsWith("안녕하세요")) { safeReply(replier, "반가워요! " + helloEmojis[Math.floor(Math.random() * helloEmojis.length)]); return; }
+    if (msg == "ㅎㅇ" || msg == "ㅎㅇ요" || msg == "하이" || msg == "안녕" || msg == "하이루") { safeReply(replier, "이 방은 존댓말 필수입니다. 공지 확인해주세요."); return; }
+    if (msg == "!안녕" || msg == "!안녕하세요" || msg == "/억지응답") { safeReply(replier, "(왜인지는 모르겠지만 이 메시지에 응답을 해야할 것 같다는 느낌이 든다)"); return; }
+    if (msg == "출석") { safeReply(replier, "\"!출석\" 을 입력해야 출석 완료!"); return; }
+    if (msg == "!생존확인" || msg == "!생존신고" || msg == "JAVA_HOME") { safeReply(replier, "이 메시지가 전송된다면 살아있다는 것 입니다."); return; }
 
-  if (msg == "!브리핑") {
-    safeReply(replier, "매일 아침에 제공되는 AI기반 브리핑 서비스 입니다.\n"
-      + "❗️참고사항❗️"
-      + "기상상황은 예측에서 벗어날 수 있습니다.\n"
-      + "기상관측위치 기준은 각 시•도청 혹은 전지역 기온/날씨의 평균입니다.\n"
-      + "(단, 경기도 북부는 의정부에 위치한 경기도청북부청사 기준이며, 경기도 남부는 수원에 위치한 경기도청 기준)\n"
-      + "해당 브리핑에는 다음 모델을 사용했습니다: Apple Intelligence(온디바이스/비공개 클라우드), ChatGPT 4o/5\n"
-      + "AI 정보는 오류/누락이 있을 수 있으며, 특정 방/사용자의 공식 입장이 아닙니다.");
-    return;
-  }
+    // ===== 관리자 명령 =====
+    if (sender == "권재현") {
+        if (msg == "!출석초기화") { attendanceList = {}; attendanceStats = {}; saveData(); safeReply(replier, "✅ 출석 데이터를 초기화했어요."); return; }
+        if (msg == "!채팅초기화") { chatCount = {}; saveData(); safeReply(replier, "✅ 채팅 수 데이터를 초기화했어요."); return; }
+        if (msg == "!운세초기화") { fortuneList = {}; saveData(); safeReply(replier, "✅ 운세 데이터를 초기화했어요."); return; }
+        if (msg == "!전체초기화") {
+            attendanceList = {}; attendanceStats = {}; chatCount = {}; memberPoints = {}; fortuneList = {}; lastDate = getTodayKey();
+            saveData(); safeReply(replier, "✅ 전체 데이터를 초기화했어요."); return;
+        }
+    }
 
-  if (msg == "!결석" || msg == "!석출" || msg == "석출" || msg == "!노잼") {
-    var emoji3 = shameEmojis[Math.floor(Math.random() * shameEmojis.length)];
-    safeReply(replier, "재미없어요 " + emoji3);
-    return;
-  }
+    // ===== 출석 랭킹 =====
+    if (msg == "!출석랭킹") {
+        var todayKey = getTodayKey();
+        if (attendanceList[todayKey] && attendanceList[todayKey].length > 0) {
+            var list = "";
+            for (var i = 0; i < attendanceList[todayKey].length; i++) {
+                var medalRL = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
+                var shown = getUnifiedSenderName(attendanceList[todayKey][i].sender); // 저장도 고정닉이지만 안전하게 통일
+                list += (i + 1) + "등: " + shown + " " + medalRL + "\n";
+            }
+            list += "랭킹에 계신 분들 모두 축하합니다!";
+            safeReply(replier, "📋 오늘의 아침출석 랭킹\n" + list);
+        } else {
+            safeReply(replier, "아직 아무도 출석하지 않았어요. 😢\n다들 자고있나...?");
+        }
+        return;
+    }
 
-  // 가벼운 확률 응답
-  var shouldReply = Math.random() < 0.5;
-  if (shouldReply) {
-    if (msg === "ㅋ") { safeReply(replier, "ㅋ‍‍"); return; }
-    if (msg === "ㅎ") { safeReply(replier, "ㅎ‍‍"); return; }
-  }
+    // ===== 출석 통계 =====
+    if (msg == "!출석통계") {
+        var keys = Object.keys(attendanceStats);
+        if (keys.length === 0) safeReply(replier, "아직 출석한 사용자가 없습니다. 😢");
+        else {
+            var list2 = "📊 전체 출석 통계\n";
+            keys.sort(function (a, b) {
+                var t1 = (attendanceStats[a] && attendanceStats[a].total) || 0;
+                var t2 = (attendanceStats[b] && attendanceStats[b].total) || 0;
+                if (t1 !== t2) return t2 - t1;
+                var r1 = (attendanceStats[a] && attendanceStats[a].ranks) || [];
+                var r2 = (attendanceStats[b] && attendanceStats[b].ranks) || [];
+                var avg1 = r1.length ? r1.reduce(function (x, y) { return x + y; }) / r1.length : Infinity;
+                var avg2 = r2.length ? r2.reduce(function (x, y) { return x + y; }) / r2.length : Infinity;
+                return avg1 - avg2;
+            });
+            for (var i = 0; i < keys.length; i++) {
+                var uname = keys[i];
+                var stats = attendanceStats[uname];
+                var avg = stats.ranks.length ? (stats.ranks.reduce(function (a, b) { return a + b; }) / stats.ranks.length).toFixed(2) : "N/A";
+                list2 += "- " + uname + ": " + stats.total + "일 출석 | 평균 등수 " + avg + "\n";
+            }
+            list2 += "상위권에 계신 분들 모두 축하합니다!";
+            safeReply(replier, list2);
+        }
+        return;
+    }
+
+    // ===== !나 (내 정보 + 평균등수) =====
+    if (msg === "!나") {
+        ensureChatRecord(unifiedName);
+        var myCount = chatCount[unifiedName].count || 0;
+        var myLast = chatCount[unifiedName].lastChatAt ? chatCount[unifiedName].lastChatAt : "기록 없음";
+        var myAttend = (attendanceStats[unifiedName] && attendanceStats[unifiedName].total) ? attendanceStats[unifiedName].total : 0;
+        var myPoint = memberPoints[unifiedName] || 0;
+
+        var avgRank = "N/A";
+        if (attendanceStats[unifiedName] && Array.isArray(attendanceStats[unifiedName].ranks) && attendanceStats[unifiedName].ranks.length > 0) {
+            var rks = attendanceStats[unifiedName].ranks;
+            var sum = 0;
+            for (var i = 0; i < rks.length; i++) sum += (typeof rks[i] === "number" ? rks[i] : 0);
+            avgRank = (sum / rks.length).toFixed(2);
+        }
+
+        var headerName = unifiedName;
+        var header = "나의 정보[" + headerName + "]";
+
+        var text = header + "\n"
+            + "점수 " + myPoint + "점 | 채팅수 " + myCount + "개\n"
+            + "출석 " + myAttend + "일 | 평균 " + avgRank + "위\n"
+            + "마지막 채팅일시 " + myLast;
+
+        safeReply(replier, text);
+        return;
+    }
+
+    // ===== !남 (닉) =====
+    if (msg.startsWith("!남 ")) {
+        var raw = msg.substring("!남".length).trim();
+        var targetName = getUnifiedSenderName(raw);
+        if (!targetName) { safeReply(replier, "대상 닉네임을 입력해주세요. 예) !남 코알"); return; }
+
+        var hasAny =
+            (chatCount[targetName] != null) ||
+            (memberPoints[targetName] != null) ||
+            (attendanceStats[targetName] != null);
+
+        if (!hasAny) {
+            safeReply(replier, targetName + " 님의 기록이 없어요.");
+            return;
+        }
+
+        ensureChatRecord(targetName);
+        var tCount = (chatCount[targetName] && chatCount[targetName].count) ? chatCount[targetName].count : 0;
+        var tLast = (chatCount[targetName] && chatCount[targetName].lastChatAt) ? chatCount[targetName].lastChatAt : "기록 없음";
+        var tAttend = (attendanceStats[targetName] && attendanceStats[targetName].total) ? attendanceStats[targetName].total : 0;
+        var tPoint = memberPoints[targetName] || 0;
+
+        var tAvg = "N/A";
+        if (attendanceStats[targetName] && Array.isArray(attendanceStats[targetName].ranks) && attendanceStats[targetName].ranks.length > 0) {
+            var trks = attendanceStats[targetName].ranks;
+            var tsum = 0;
+            for (var i = 0; i < trks.length; i++) tsum += (typeof trks[i] === "number" ? trks[i] : 0);
+            tAvg = (tsum / trks.length).toFixed(2);
+        }
+
+        var header2 = targetName + " 님의 정보";
+
+        var text2 = header2 + "\n"
+            + "점수 " + tPoint + "점 | 채팅수 " + tCount + "개\n"
+            + "출석 " + tAttend + "일 | 평균 " + tAvg + "위\n"
+            + "마지막 채팅일시 " + tLast;
+
+        safeReply(replier, text2);
+        return;
+    }
+
+    // ===== 멤버통계 (점수 desc, 동점 시 채팅수 desc, 공란 없이) =====
+    if (msg == "!멤버통계") {
+        var memberSet = {};
+        for (var u in memberPoints) memberSet[u] = true;
+        for (var u2 in chatCount) memberSet[u2] = true;
+        for (var u3 in attendanceStats) memberSet[u3] = true;
+
+        var rows = [];
+        for (var name in memberSet) {
+            if (name === "권재현") continue; // 필요 시 제외 유지
+            ensureChatRecord(name);
+            var p = memberPoints[name] || 0;
+            var c = (chatCount[name] && chatCount[name].count) ? chatCount[name].count : 0;
+            var a = (attendanceStats[name] && attendanceStats[name].total) ? attendanceStats[name].total : 0;
+            var last = (chatCount[name] && chatCount[name].lastChatAt) ? chatCount[name].lastChatAt : "기록 없음";
+            rows.push({ name: name, point: p, chat: c, attend: a, last: last });
+        }
+
+        if (rows.length === 0) {
+            safeReply(replier, "아직 멤버 통계를 표시할 데이터가 없어요. 😢");
+            return;
+        }
+
+        rows.sort(function (x, y) {
+            if (y.point !== x.point) return y.point - x.point;
+            return y.chat - x.chat;
+        });
+
+        var out = "📈 멤버 통계\n";
+        for (var i = 0; i < rows.length; i++) {
+            var medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
+            out += rows[i].name + (medal ? " " + medal : "") + " : "
+                + "점수 " + rows[i].point + "점 | 채팅수 " + rows[i].chat + "개 | " + rows[i].attend + "일 출석\n"
+                + "마지막 채팅일시 " + rows[i].last + (i < rows.length - 1 ? "\n" : "");
+        }
+        safeReply(replier, out);
+        return;
+    }
+
+    // ===== 기타 기능 =====
+    if (msg == "!명언") { safeReply(replier, quotes[Math.floor(Math.random() * quotes.length)]); return; }
+    if (msg == "!밥" || msg == "밥" || msg == "점메추" || msg == "저메추" || msg == "메뉴추천") {
+        var food = foodList[Math.floor(Math.random() * foodList.length)];
+        safeReply(replier, unifiedName + " 님,\n오늘은 '" + food + "' 어떠세요? 🍽️"); return;
+    }
+    if (msg == "!디저트" || msg == "디저트" || msg == "후식" || msg == "후식추천") {
+        var dessert = dessertList[Math.floor(Math.random() * dessertList.length)];
+        safeReply(replier, unifiedName + " 님,\n디저트는 '" + dessert + "' 추천드려요! 🍰"); return;
+    }
+    if (msg == "!운세") {
+        var tday = getTodayKey();
+        if (typeof fortuneList != "object") fortuneList = {};
+        if (!fortuneList[tday]) fortuneList[tday] = {};
+        if (!fortuneList[tday][unifiedName]) {
+            var random = Math.floor(Math.random() * fortunes.length);
+            fortuneList[tday][unifiedName] = fortunes[random];
+            saveData();
+        }
+        var nums = [];
+        while (nums.length < 6) {
+            var rnum = Math.floor(Math.random() * 45) + 1;
+            if (nums.indexOf(rnum) == -1) nums.push(rnum);
+        }
+        nums.sort(function (a, b) { return a - b; });
+        safeReply(replier, unifiedName + " 님의 오늘의 운세입니다. 🔮\n\n"
+            + fortuneList[tday][unifiedName]
+            + "\n\n🎲로또 추천 번호: " + nums.join(", ")
+            + "\n주의사항: 해당 기능은 당첨여부를 보장하지 않습니다.");
+        return;
+    }
+
+    if (msg == "사용법" || msg == "봇" || msg == "도움말" || msg == "!") {
+        safeReply(replier,
+            "📌 채팅봇 기능안내\n"
+            + "1. 아침에 채팅치면 자동으로 출석!🎉\n"
+            + "2. !출석 – 출석 가능시간 알아보기(혹은 강제출석) / !출석랭킹 – 오늘 출석 목록 📋 / !출석통계 – 누적 출석 통계 📊\n"
+            + "3. !나 – 내 정보 확인하기🧑‍💻\n"
+            + "4. !남 (닉네임) – 남의 정보 확인하기👤\n"
+            + "5. !멤버통계 – 멤버 종합 통계(점수 순) 📈\n"
+            + "6. !밥 / !디저트: 음식 추천 제공 🍲🍨\n"
+            + "7. !명언 / !운세: 명언 또는 운세 보기👀\n"
+            + "문제 발생 시 토리님에게 문의 부탁드립니다. (Version 2.2)");
+        return;
+    }
+
+    if (msg == "!주의사항") {
+        safeReply(replier, "⚠️주의사항⚠️\n"
+            + "1. 채팅봇은 원활한 구동을 보장하지 않습니다. 간혹 1초이내 다량 채팅 시 일부만 응답될 수 있습니다.\n"
+            + "2. 닉네임 + MBTI 기반으로 동작하니, 닉변이 잦다면 고정 설정을 요청해주세요.\n"
+            + "3. 채팅/출석 등 기록형 기능은 관련 법률에 따라 주기적으로 초기화되며, 최대 1년 보존 후 삭제될 수 있습니다.\n"
+            + "4. 주기적 점검으로 잠시 기능이 중단될 수 있습니다.\n"
+            + "5. 로또 번호는 당첨을 보장하지 않습니다.\n"
+            + "6. 사진/이모티콘은 인식하지 않을 수 있습니다.\n"
+            + "7. 해당 봇은 AI가 아닙니다. 정확한 답변을 요구하지 마십시오.");
+        return;
+    }
+
+    if (msg == "!브리핑") {
+        safeReply(replier, "매일 아침에 제공되는 AI기반 브리핑 서비스 입니다.\n"
+            + "❗️참고사항❗️"
+            + "기상상황은 예측에서 벗어날 수 있습니다.\n"
+            + "기상관측위치 기준은 각 시•도청 혹은 전지역 기온/날씨의 평균입니다.\n"
+            + "(단, 경기도 북부는 의정부에 위치한 경기도청북부청사 기준이며, 경기도 남부는 수원에 위치한 경기도청 기준)\n"
+            + "해당 브리핑에는 다음 모델을 사용했습니다: Apple Intelligence(온디바이스/비공개 클라우드), ChatGPT 4o/5\n"
+            + "AI 정보는 오류/누락이 있을 수 있으며, 특정 방/사용자의 공식 입장이 아닙니다.");
+        return;
+    }
+
+    if (msg == "!결석" || msg == "!석출" || msg == "석출" || msg == "!노잼") {
+        var emoji3 = shameEmojis[Math.floor(Math.random() * shameEmojis.length)];
+        safeReply(replier, "재미없어요 " + emoji3);
+        return;
+    }
+
+    // 가벼운 확률성 응답
+    var shouldReply = Math.random() < 0.5;
+    if (shouldReply) {
+        if (msg === "ㅋ") { safeReply(replier, "ㅋ‍‍"); return; }
+        if (msg === "ㅎ") { safeReply(replier, "ㅎ‍‍"); return; }
+    }
 }
 
 /***** 안드로이드 라이프사이클 (기존 유지) *****/
 function onCreate(savedInstanceState, activity) {
-  let textView = new android.widget.TextView(activity);
-  textView.setText("Hello, World!");
-  textView.setTextColor(android.graphics.Color.DKGRAY);
-  activity.setContentView(textView);
+    let textView = new android.widget.TextView(activity);
+    textView.setText("Hello, World!");
+    textView.setTextColor(android.graphics.Color.DKGRAY);
+    activity.setContentView(textView);
 }
 function onStart(activity) { }
 function onResume(activity) { }
