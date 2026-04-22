@@ -1,14 +1,14 @@
 /*
  * MBTI 채팅방 전용 봇
- * Version 5.1
+ * Version 5.6
  */
 
 var bot = BotManager.getCurrentBot();
 
-
-//  상수
+// 버전, 정보, 관리자상수화 등
+var VERSION = "5.6";
 var TARGET_ROOM = "봄이다! 인팁•인티제의 MBTI 수다방[타유형 대환영]";
-var ADMIN_NAME = "권재현";
+var ADMIN_NAMES = ["권재현"];
 
 var FILE_USER_MAP = "user_map.txt";
 var FILE_USER_DATA = "user_data.txt";
@@ -637,7 +637,7 @@ bot.addListener(Event.MESSAGE, function (msg) {
     var senderHash = msg.author.hash || senderName;  // Android 11 미만 fallback
     var content = msg.content;
     var isTarget = (room === TARGET_ROOM);
-    var isAdminDM = (!msg.isGroupChat && senderName === ADMIN_NAME);
+    var isAdminDM = (!msg.isGroupChat && ADMIN_NAMES.indexOf(senderName) !== -1);
 
     if (!isTarget && !isAdminDM) return;
 
@@ -654,12 +654,12 @@ bot.addListener(Event.MESSAGE, function (msg) {
                 "📌 [MBTI방] 관리자 명령 안내\n"
                 + "!삭제 (닉네임)  – 해당 유저 데이터 삭제\n"
                 + "!출석 (닉네임)  – 대리 출석 처리\n"
-                + "!출석초기화– 오늘 출석 목록 초기화\n"
+                + "!출석초기화 – 오늘 출석 목록 초기화\n"
                 + "!데이터초기화   – 전체 유저 데이터 초기화\n"
-                + "!운세초기화– 오늘 운세 초기화\n"
-                + "!퀴즈초기화– 퀴즈 정답 기록 초기화\n"
-                + "!매핑초기화– 해시↔닉네임 매핑 초기화 (신중!)\n"
-                + "!전체초기화– 매핑 제외 전체 초기화"
+                + "!운세초기화 – 오늘 운세 초기화\n"
+                + "!퀴즈초기화 – 퀴즈 정답 기록 초기화\n"
+                + "!매핑초기화 – 해시↔닉네임 매핑 초기화 (신중!)\n"
+                + "!전체초기화 – 매핑 제외 전체 초기화"
             );
             return;
         }
@@ -731,7 +731,7 @@ bot.addListener(Event.MESSAGE, function (msg) {
 
     //  그룹 채팅방 (TARGET_ROOM) ========================
     var displayName = senderName;
-    var isAdmin = (senderName === ADMIN_NAME);
+    var isAdmin = (ADMIN_NAMES.indexOf(senderName) !== -1);
 
     // 채팅 카운트 + 포인트 (관리자 제외)
     if (!isAdmin) {
@@ -1060,7 +1060,8 @@ bot.addListener(Event.MESSAGE, function (msg) {
             + "퀴즈\n"
             + " • !퀴즈 – 퀴즈 시작\n"
             + " • !퀴즈랭킹 – 퀴즈 정답 누적 랭킹 🏆\n\n"
-            + "문제 발생 시 관리자에게 문의해주세요. (v5.3)"
+            + "문제 발생 시 관리자에게 문의해주세요!\n"
+            + "VERSION: " + VERSION
         );
         return;
     }
@@ -1073,13 +1074,66 @@ bot.addListener(Event.MESSAGE, function (msg) {
 });
 
 
-//  액티비티 이벤트
 
+// 
+//  액티비티 이벤트
+// 
 bot.addListener(Event.ACTIVITY_CREATE, function (activity) {
-    var tv = new android.widget.TextView(activity);
-    tv.setText("CosBot v5.1");
-    tv.setTextColor(android.graphics.Color.DKGRAY);
-    activity.setContentView(tv);
+    loadAll();
+
+    var scrollView = new android.widget.ScrollView(activity);
+    var layout = new android.widget.LinearLayout(activity);
+    layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+    layout.setPadding(24, 24, 24, 24);
+
+    // 타이틀
+    var title = new android.widget.TextView(activity);
+    title.setText("Bangjang Assistant v"+ VERSION +" — 멤버 랭킹");
+    title.setTextSize(18);
+    title.setTextColor(android.graphics.Color.BLACK);
+    title.setPadding(0, 0, 0, 16);
+    layout.addView(title);
+
+    // 멤버 목록 (점수 내림차순)
+    var rows = buildMemberStats();
+
+    if (!rows.length) {
+        var empty = new android.widget.TextView(activity);
+        empty.setText("아직 멤버 데이터가 없습니다.");
+        empty.setTextColor(android.graphics.Color.DKGRAY);
+        layout.addView(empty);
+    } else {
+        var i, row, tv, medal;
+        for (i = 0; i < rows.length; i++) {
+            row = rows[i];
+            medal = (i === 0) ? "🥇 " : (i === 1) ? "🥈 " : (i === 2) ? "🥉 " : "";
+
+            tv = new android.widget.TextView(activity);
+            tv.setText(
+                (i + 1) + "위 " + medal + row.name + "\n"
+                + "  점수: " + row.point + "점 | 채팅: " + row.chat + "개\n"
+                + "  출석: " + row.attend + "일 | 퀴즈: " + row.quizCorrect + "회\n"
+                + "  hash: " + row.hash
+            );
+            tv.setTextSize(13);
+            tv.setTextColor(android.graphics.Color.DKGRAY);
+            tv.setPadding(0, 8, 0, 8);
+
+            // 구분선
+            var divider = new android.widget.View(activity);
+            divider.setBackgroundColor(android.graphics.Color.LTGRAY);
+            var lp = new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1
+            );
+            divider.setLayoutParams(lp);
+
+            layout.addView(tv);
+            layout.addView(divider);
+        }
+    }
+
+    scrollView.addView(layout);
+    activity.setContentView(scrollView);
 });
 bot.addListener(Event.ACTIVITY_START, function () { });
 bot.addListener(Event.ACTIVITY_RESUME, function () { });
