@@ -6,7 +6,7 @@
 var bot = BotManager.getCurrentBot();
 
 // 버전, 정보, 관리자상수화 등
-var VERSION = "5.6";
+var VERSION = "5.6.1";
 var TARGET_ROOM = "봄이다! 인팁•인티제의 MBTI 수다방[타유형 대환영]";
 var ADMIN_NAMES = ["권재현"];
 
@@ -654,6 +654,7 @@ bot.addListener(Event.MESSAGE, function (msg) {
                 "📌 [MBTI방] 관리자 명령 안내\n"
                 + "!삭제 (닉네임)  – 해당 유저 데이터 삭제\n"
                 + "!출석 (닉네임)  – 대리 출석 처리\n"
+                + "!멤버통계 – 멤버통계 RAW\n"
                 + "!출석초기화 – 오늘 출석 목록 초기화\n"
                 + "!데이터초기화   – 전체 유저 데이터 초기화\n"
                 + "!운세초기화 – 오늘 운세 초기화\n"
@@ -713,6 +714,40 @@ bot.addListener(Event.MESSAGE, function (msg) {
             userMap = {};
             saveUserMap();
             msg.reply("✅ 해시↔닉네임 매핑을 초기화했어요.\n(다음 채팅 수신 전까지 닉네임 검색이 작동하지 않습니다.)"); return;
+        }
+
+        if (content === "!멤버통계") {
+            loadAll();
+            var allKeys = [], hk;
+            for (hk in userData) {
+                if (userData.hasOwnProperty(hk)) allKeys.push(hk);
+            }
+            if (!allKeys.length) { msg.reply("저장된 유저 데이터가 없습니다."); return; }
+
+            allKeys.sort(function (a, b) {
+                var pa = userData[a] ? (userData[a].point || 0) : 0;
+                var pb = userData[b] ? (userData[b].point || 0) : 0;
+                return pb - pa;
+            });
+
+            var dmOut = "📦 전체 멤버 raw 데이터 (" + allKeys.length + "명)\n";
+            var ki;
+            for (ki = 0; ki < allKeys.length; ki++) {
+                var hki = allKeys[ki];
+                ensureUser(hki);
+                var uki = userData[hki];
+                var avgi = calcAvgRank(hki);
+                dmOut += "———————————————\n"
+                    + "[" + (ki + 1) + "] " + nameOf(hki) + "\n"
+                    + "hash: " + hki + "\n"
+                    + "점수: " + uki.point + " | 채팅: " + uki.chat + "\n"
+                    + "출석: " + uki.attend + "일 | 평균등수: " + (avgi === null ? "N/A" : avgi.toFixed(2)) + "\n"
+                    + "퀴즈정답: " + uki.quizCorrect + "\n"
+                    + "뽑기: " + uki.drawCount + "회 (" + (uki.drawDate || "-") + ")\n"
+                    + "마지막채팅: " + (uki.lastChatAt || "없음") + "\n"
+                    + "출석등수기록: [" + (uki.attendRanks || []).join(", ") + "]\n";
+            }
+            msg.reply(dmOut); return;
         }
 
         if (content === "!전체초기화") {
@@ -1073,69 +1108,68 @@ bot.addListener(Event.MESSAGE, function (msg) {
     }
 });
 
-
-
-// 
-//  액티비티 이벤트
-// 
-bot.addListener(Event.ACTIVITY_CREATE, function (activity) {
+// 액티비티 이벤트
+// 액티비티 이벤트
+bot.addListener("activityCreate", function (activity) {
     loadAll();
 
-    var scrollView = new android.widget.ScrollView(activity);
-    var layout = new android.widget.LinearLayout(activity);
-    layout.setOrientation(android.widget.LinearLayout.VERTICAL);
-    layout.setPadding(24, 24, 24, 24);
+    App.runOnUiThread(function () {
+        var ctx = App.getContext();
 
-    // 타이틀
-    var title = new android.widget.TextView(activity);
-    title.setText("Bangjang Assistant v"+ VERSION +" — 멤버 랭킹");
-    title.setTextSize(18);
-    title.setTextColor(android.graphics.Color.BLACK);
-    title.setPadding(0, 0, 0, 16);
-    layout.addView(title);
+        var scrollView = new android.widget.ScrollView(ctx);
+        var layout = new android.widget.LinearLayout(ctx);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(24, 24, 24, 24);
 
-    // 멤버 목록 (점수 내림차순)
-    var rows = buildMemberStats();
+        var title = new android.widget.TextView(ctx);
+        title.setText("CosBot v" + VERSION + " — 멤버 랭킹");
+        title.setTextSize(18);
+        title.setTextColor(android.graphics.Color.BLACK);
+        title.setPadding(0, 0, 0, 16);
+        layout.addView(title);
 
-    if (!rows.length) {
-        var empty = new android.widget.TextView(activity);
-        empty.setText("아직 멤버 데이터가 없습니다.");
-        empty.setTextColor(android.graphics.Color.DKGRAY);
-        layout.addView(empty);
-    } else {
-        var i, row, tv, medal;
-        for (i = 0; i < rows.length; i++) {
-            row = rows[i];
-            medal = (i === 0) ? "🥇 " : (i === 1) ? "🥈 " : (i === 2) ? "🥉 " : "";
+        var rows = buildMemberStats();
 
-            tv = new android.widget.TextView(activity);
-            tv.setText(
-                (i + 1) + "위 " + medal + row.name + "\n"
-                + "  점수: " + row.point + "점 | 채팅: " + row.chat + "개\n"
-                + "  출석: " + row.attend + "일 | 퀴즈: " + row.quizCorrect + "회\n"
-                + "  hash: " + row.hash
-            );
-            tv.setTextSize(13);
-            tv.setTextColor(android.graphics.Color.DKGRAY);
-            tv.setPadding(0, 8, 0, 8);
+        if (!rows.length) {
+            var empty = new android.widget.TextView(ctx);
+            empty.setText("아직 멤버 데이터가 없습니다.");
+            empty.setTextColor(android.graphics.Color.DKGRAY);
+            layout.addView(empty);
+        } else {
+            var i, row, tv, medal, divider, lp;
+            for (i = 0; i < rows.length; i++) {
+                row = rows[i];
+                medal = (i === 0) ? "🥇 " : (i === 1) ? "🥈 " : (i === 2) ? "🥉 " : "";
 
-            // 구분선
-            var divider = new android.widget.View(activity);
-            divider.setBackgroundColor(android.graphics.Color.LTGRAY);
-            var lp = new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1
-            );
-            divider.setLayoutParams(lp);
+                tv = new android.widget.TextView(ctx);
+                tv.setText(
+                    (i + 1) + "위 " + medal + row.name + "\n"
+                    + "  점수: " + row.point + "점 | 채팅: " + row.chat + "개\n"
+                    + "  출석: " + row.attend + "일 | 퀴즈: " + row.quizCorrect + "회\n"
+                    + "  hash: " + row.hash
+                );
+                tv.setTextSize(13);
+                tv.setTextColor(android.graphics.Color.DKGRAY);
+                tv.setPadding(0, 8, 0, 8);
 
-            layout.addView(tv);
-            layout.addView(divider);
+                divider = new android.widget.View(ctx);
+                divider.setBackgroundColor(android.graphics.Color.LTGRAY);
+                lp = new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1
+                );
+                divider.setLayoutParams(lp);
+
+                layout.addView(tv);
+                layout.addView(divider);
+            }
         }
-    }
 
-    scrollView.addView(layout);
-    activity.setContentView(scrollView);
+        scrollView.addView(layout);
+        activity.setContentView(scrollView);  // setContentView는 activity 객체로
+    });
 });
-bot.addListener(Event.ACTIVITY_START, function () { });
-bot.addListener(Event.ACTIVITY_RESUME, function () { });
-bot.addListener(Event.ACTIVITY_PAUSE, function () { });
-bot.addListener(Event.ACTIVITY_STOP, function () { });
+
+bot.addListener("activityStart", function () { });
+bot.addListener("activityResume", function () { });
+bot.addListener("activityPause", function () { });
+bot.addListener("activityStop", function () { });
