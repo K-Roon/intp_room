@@ -1034,7 +1034,7 @@ bot.addListener(Event.MESSAGE, function (msg) {
     }
 
     //  고정 멘트 
-    if (content.indexOf("🎉 환영합니다! 🎉") === 0) { msg.reply("안녕하세요! 공지 읽고, 하트인증 & 부르기 쉬운 닉네임으로 변경해주세요! 😊"); return; }
+    if (content.indexOf("🎉 환영합니다! 🎉") === 0) { msg.reply("🚨보이스룸 바로 입장 절대금지!🚨\n(보이스룸은 입장 10분 후 혹은 방장 허가 직후 가능)\n반갑습니다! 공지 먼저읽고, 하트인증 & 부르기 쉬운 닉네임으로 변경해주세요! 😊"); return; }
     if (content.indexOf("보이스룸이 방금") === 0) { msg.reply("보이스룸이 시작되었어요! 이번에는 어떤 이야기들이 오갈까요?!"); return; }
     if (content.indexOf("보이스룸 종료") === 0) { msg.reply("보이스룸이 종료되었습니다. 모두 수고하셨습니다!"); return; }
     if (content.indexOf("안녕하세요") === 0) { msg.reply("반가워요! 🙌"); return; }
